@@ -1,0 +1,421 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum VehicleGroup {
+  STANDARD
+  AUTOMATIC
+  MINI_VANS
+  MINI_VAN_AUTOMATIC
+  SUV
+  LUXURY
+}
+
+enum Transmission {
+  MANUAL
+  AUTOMATIC
+}
+
+enum FuelType {
+  PETROL
+  DIESEL
+  PETROL_OR_DIESEL
+  ELECTRIC
+  HYBRID
+}
+
+enum QuoteStatus {
+  NEW
+  IN_PROGRESS
+  QUOTE_SENT
+  DEPOSIT_PENDING
+  CONFIRMED
+  CANCELLED
+  EXPIRED
+  COMPLETED
+}
+
+enum PaymentStatus {
+  INITIATED
+  PAID
+  FAILED
+  CANCELLED
+}
+
+enum EmailDeliveryStatus {
+  PENDING
+  PROCESSING
+  SENT
+  FAILED
+}
+
+enum AdminRole {
+  ADMIN
+  STAFF
+}
+
+model Vehicle {
+  id                 String              @id @default(cuid())
+  code               String              @unique
+  slug               String              @unique
+  name               Json
+  description        Json?
+  exampleModels      String[]
+  group              VehicleGroup
+  transmission       Transmission?
+  seats              Int?
+  doors              Int?
+  luggageMinLitres   Int?
+  luggageMaxLitres   Int?
+  fuel               FuelType?
+  airbag             Boolean?
+  abs                Boolean?
+  airConditioning    Boolean?
+  cdPlayer           Boolean?
+  imageUrl           String?
+  cdwExcessEur       Decimal?            @db.Decimal(10, 2)
+  availableUnits     Int                 @default(0)
+  minimumDriverAge   Int?
+  displayOrder       Int                 @default(0)
+  isActive           Boolean             @default(true)
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+  pricePlans         PricePlan[]
+  quoteItems         QuoteVehicle[]
+  availabilityBlocks AvailabilityBlock[]
+
+  @@index([group, isActive, displayOrder])
+}
+
+model Location {
+  id           String   @id @default(cuid())
+  slug         String   @unique
+  name         Json
+  description  Json?
+  address      String?
+  latitude     Decimal? @db.Decimal(10, 7)
+  longitude    Decimal? @db.Decimal(10, 7)
+  phone        String?
+  isAirport    Boolean  @default(false)
+  isFree       Boolean  @default(false)
+  displayOrder Int      @default(0)
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  pickupQuotes Quote[]  @relation("PickupLocation")
+  returnQuotes Quote[]  @relation("ReturnLocation")
+}
+
+model Extra {
+  id                  String       @id @default(cuid())
+  code                String       @unique
+  slug                String       @unique
+  name                Json
+  description         Json?
+  unitPriceEur        Decimal?     @db.Decimal(10, 2)
+  priceUnit           String?
+  requiresChildAge    Boolean      @default(false)
+  requiresChildWeight Boolean      @default(false)
+  isActive            Boolean      @default(true)
+  displayOrder        Int          @default(0)
+  createdAt           DateTime     @default(now())
+  updatedAt           DateTime     @updatedAt
+  quoteItems          QuoteExtra[]
+}
+
+model Season {
+  id         String      @id @default(cuid())
+  name       Json
+  startsOn   DateTime
+  endsOn     DateTime
+  isActive   Boolean     @default(true)
+  pricePlans PricePlan[]
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+
+  @@index([startsOn, endsOn, isActive])
+}
+
+model PricePlan {
+  id           String   @id @default(cuid())
+  vehicleId    String
+  seasonId     String
+  minDays      Int
+  maxDays      Int?
+  dailyRateEur Decimal? @db.Decimal(10, 2)
+  vehicle      Vehicle  @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+  season       Season   @relation(fields: [seasonId], references: [id], onDelete: Cascade)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@unique([vehicleId, seasonId, minDays, maxDays])
+  @@index([vehicleId, seasonId, minDays])
+}
+
+model Offer {
+  id                 String    @id @default(cuid())
+  slug               String    @unique
+  name               Json
+  description        Json?
+  offerType          String
+  vehicleCodes       String[]
+  startsAt           DateTime?
+  endsAt             DateTime?
+  discountPercent    Decimal?  @db.Decimal(5, 2)
+  discountAmountEur  Decimal?  @db.Decimal(10, 2)
+  minimumDays        Int?
+  minimumAdvanceDays Int?
+  stackable          Boolean   @default(false)
+  priority           Int       @default(0)
+  isActive           Boolean   @default(true)
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+}
+
+model Faq {
+  id           String   @id @default(cuid())
+  key          String   @unique
+  question     Json
+  answer       Json
+  displayOrder Int
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model Review {
+  id         String    @id @default(cuid())
+  source     String
+  author     String
+  rating     Decimal?  @db.Decimal(3, 2)
+  text       Json
+  reviewDate DateTime?
+  imageUrl   String?
+  isActive   Boolean   @default(true)
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  @@index([source, isActive, reviewDate])
+}
+
+model ContentPage {
+  id             String   @id @default(cuid())
+  slug           String   @unique
+  title          Json
+  body           Json
+  seoTitle       Json?
+  seoDescription Json?
+  isPublished    Boolean  @default(false)
+  updatedAt      DateTime @updatedAt
+  createdAt      DateTime @default(now())
+}
+
+model HomeSlide {
+  id           String   @id @default(cuid())
+  key          String   @unique
+  title        Json
+  subtitle     Json?
+  imageUrl     String?
+  linkUrl      String?
+  displayOrder Int
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model HomeBanner {
+  id           String   @id @default(cuid())
+  key          String   @unique
+  title        Json
+  text         Json?
+  imageUrl     String?
+  linkUrl      String?
+  displayOrder Int
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model Setting {
+  key       String   @id
+  value     Json
+  updatedAt DateTime @updatedAt
+}
+
+model AvailabilityBlock {
+  id        String   @id @default(cuid())
+  vehicleId String
+  startsAt  DateTime
+  endsAt    DateTime
+  reason    String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  vehicle   Vehicle  @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+
+  @@index([vehicleId, startsAt, endsAt])
+}
+
+model Quote {
+  id                           String         @id @default(cuid())
+  reference                    String         @unique
+  status                       QuoteStatus    @default(NEW)
+  customerFirstName            String
+  customerLastName             String
+  customerEmail                String
+  customerPhone                String
+  customerCountry              String
+  language                     String         @default("en")
+  pickupLocationId             String
+  returnLocationId             String
+  pickupAt                     DateTime
+  returnAt                     DateTime
+  flightNumber                 String?
+  driverAge                    Int
+  driverLicenceYears           Int
+  driverHasInternationalPermit Boolean
+  additionalDrivers            Json
+  notes                        String?
+  quotedTotalEur               Decimal?       @db.Decimal(10, 2)
+  depositEur                   Decimal?       @db.Decimal(10, 2)
+  quoteSentAt                  DateTime?
+  expiresAt                    DateTime?
+  createdAt                    DateTime       @default(now())
+  updatedAt                    DateTime       @updatedAt
+  pickupLocation               Location       @relation("PickupLocation", fields: [pickupLocationId], references: [id])
+  returnLocation               Location       @relation("ReturnLocation", fields: [returnLocationId], references: [id])
+  vehicles                     QuoteVehicle[]
+  extras                       QuoteExtra[]
+  payments                     Payment[]
+  emailNotifications           EmailOutbox[]
+
+  @@index([status, createdAt])
+  @@index([customerEmail, reference])
+}
+
+model EmailOutbox {
+  id               String              @id @default(cuid())
+  quoteId          String?
+  contactMessageId String?
+  recipient        String
+  template         String
+  language         String
+  payload          Json
+  status           EmailDeliveryStatus @default(PENDING)
+  attempts         Int                 @default(0)
+  nextAttemptAt    DateTime            @default(now())
+  sentAt           DateTime?
+  lastError        String?
+  createdAt        DateTime            @default(now())
+  updatedAt        DateTime            @updatedAt
+  quote            Quote?              @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+  contactMessage   ContactMessage?     @relation(fields: [contactMessageId], references: [id], onDelete: Cascade)
+
+  @@index([status, nextAttemptAt])
+  @@index([quoteId, template])
+  @@index([contactMessageId, template])
+}
+
+model QuoteVehicle {
+  quoteId   String
+  vehicleId String
+  quantity  Int     @default(1)
+  quote     Quote   @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+  vehicle   Vehicle @relation(fields: [vehicleId], references: [id])
+
+  @@id([quoteId, vehicleId])
+}
+
+model QuoteExtra {
+  quoteId       String
+  extraId       String
+  quantity      Int      @default(1)
+  childAge      Int?
+  childWeightKg Decimal? @db.Decimal(5, 2)
+  quote         Quote    @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+  extra         Extra    @relation(fields: [extraId], references: [id])
+
+  @@id([quoteId, extraId])
+}
+
+model Payment {
+  id                    String        @id @default(cuid())
+  quoteId               String
+  provider              String
+  providerTransactionId String?       @unique
+  idempotencyKey        String        @unique
+  amountEur             Decimal       @db.Decimal(10, 2)
+  currency              String        @default("EUR")
+  status                PaymentStatus @default(INITIATED)
+  checkoutUrl           String?
+  customerFirstName     String
+  customerLastName      String
+  customerEmail         String
+  billingAddress        Json
+  deliveryAt            DateTime?
+  notes                 String?
+  termsAcceptedAt       DateTime
+  providerResponse      Json?
+  createdAt             DateTime      @default(now())
+  updatedAt             DateTime      @updatedAt
+  quote                 Quote         @relation(fields: [quoteId], references: [id])
+
+  @@index([quoteId, status])
+}
+
+model ContactMessage {
+  id                 String        @id @default(cuid())
+  name               String
+  email              String
+  phone              String?
+  subject            String
+  message            String
+  language           String        @default("en")
+  isRead             Boolean       @default(false)
+  createdAt          DateTime      @default(now())
+  emailNotifications EmailOutbox[]
+
+  @@index([isRead, createdAt])
+}
+
+model AdminUser {
+  id            String          @id @default(cuid())
+  email         String          @unique
+  passwordHash  String
+  role          AdminRole       @default(ADMIN)
+  isActive      Boolean         @default(true)
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  refreshTokens RefreshToken[]
+  auditLogs     AdminAuditLog[]
+}
+
+model RefreshToken {
+  id        String    @id @default(cuid())
+  tokenHash String    @unique
+  userId    String
+  expiresAt DateTime
+  revokedAt DateTime?
+  createdAt DateTime  @default(now())
+  user      AdminUser @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, expiresAt])
+}
+
+model AdminAuditLog {
+  id          String     @id @default(cuid())
+  adminUserId String?
+  action      String
+  resource    String
+  resourceId  String?
+  details     Json?
+  createdAt   DateTime   @default(now())
+  adminUser   AdminUser? @relation(fields: [adminUserId], references: [id], onDelete: SetNull)
+
+  @@index([adminUserId, createdAt])
+  @@index([resource, resourceId, createdAt])
+}
