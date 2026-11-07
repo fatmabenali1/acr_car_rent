@@ -59,6 +59,12 @@ enum AdminRole {
   STAFF
 }
 
+enum CookieConsentChoice {
+  ACCEPTED
+  REFUSED
+  CUSTOMIZED
+}
+
 model Vehicle {
   id                 String              @id @default(cuid())
   code               String              @unique
@@ -418,4 +424,14 @@ model AdminAuditLog {
 
   @@index([adminUserId, createdAt])
   @@index([resource, resourceId, createdAt])
+}
+
+model CookieConsent {
+  id        String              @id
+  choice    CookieConsentChoice
+  expiresAt DateTime
+  createdAt DateTime            @default(now())
+  updatedAt DateTime            @updatedAt
+
+  @@index([expiresAt])
 }

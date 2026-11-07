@@ -1,0 +1,196 @@
+const filterSets = {
+  standard: ['B', 'C', 'D', 'D1', 'D3'],
+  automatic: ['E', 'E1', 'E2', 'E3', 'G', 'G1'],
+  minivans: ['F', 'F1', 'V', 'V1'],
+  minivanAutomatic: ['F2', 'F3', 'F4', 'F5', 'G2', 'L5'],
+  suv: ['D', 'D3', 'G', 'G1', 'L1', 'L2'],
+  luxury: ['L1', 'L2'],
+}
+
+const categoryBRates = [
+  'Civil liability and third party liability insurance',
+  'Full insurance C.D.W. (with relevant deductible)',
+  'Theft and fire insurance',
+  'Unlimited Mileage for rentals 3 days+. (One and Two days rentals are with limited to 200 kilometers per day)',
+  'Free additional drivers',
+  'Free and Pre-Authorized Permission to Ferry our Vehicles to all Greek Islands',
+  '24Hrs road assistance',
+  'Vehicle Registration Fee (V.R.F.) & VAT 24%',
+]
+
+function createCategory({
+  code,
+  name,
+  transmission,
+  seats,
+  model,
+  imageModel,
+  slug,
+  example,
+  image,
+  images,
+  carId,
+  description,
+  priceNote,
+  specs,
+  ratesInclude,
+  features,
+}) {
+  const filters = Object.entries(filterSets)
+    .filter(([, codes]) => codes.includes(code))
+    .map(([filter]) => filter)
+  const type = code.startsWith('L') && code !== 'L5'
+    ? 'Luxury'
+    : code.startsWith('V') || code === 'L5'
+      ? 'Van'
+      : transmission
+  const imageName = (imageModel || model || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')
+  const imagePath = image ?? (imageName ? `/images/cars/${imageName}.webp` : '')
+
+  return {
+    slug: slug || `category-${code.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`,
+    code,
+    name,
+    transmission,
+    type,
+    seats: seats ?? null,
+    filters,
+    model: model || null,
+    example: example || (model ? `${model} or similar` : ''),
+    image: imagePath,
+    images: images || (imagePath ? [imagePath] : []),
+    ...(carId !== undefined ? { carId } : {}),
+    price: 'Price on request',
+    description: description || 'Explore this vehicle category for your trip in Greece.',
+    ...(priceNote ? { priceNote } : {}),
+    ...(specs ? { specs } : {}),
+    ...(ratesInclude ? { ratesInclude } : {}),
+    features: features || ['Vehicle details available on request'],
+  }
+}
+
+export const categories = [
+  createCategory({
+    code: 'B',
+    name: 'Category B Manual',
+    transmission: 'Manual',
+    seats: 4,
+    model: 'Fiat Panda',
+    slug: 'category-b-manual',
+    example: 'Fiat Panda or similar',
+    image: '/images/CategoryB manual.png',
+    images: ['/images/CategoryB manual.png'],
+    carId: 11,
+    description: 'Practical and economical cars, that can be easily driven anywhere in Athens and are also a pleasure to drive on highways. Reliable standard cars for city usage and middle distance excursions. Offer excellent fuel saving. Vehicles of Category B (Fiat Panda or similar) will never let you down, guaranteeing a pleasant holiday in Greece.',
+    priceNote: 'Our rates are in Euro, all inclusive and with no "Hidden Extras"',
+    specs: { seats: '4', airBag: 'Yes', luggage: '220L to 250L', fuel: 'Unleaded 95', doors: '5', cdPlayer: 'Yes', abs: 'Yes', ac: 'Yes', gear: 'Manual' },
+    ratesInclude: categoryBRates,
+  }),
+  createCategory({
+    code: 'C',
+    name: 'Category C Manual',
+    transmission: 'Manual',
+    seats: 5,
+    model: 'Dacia Sandero, Suzuki Swift',
+    slug: 'category-c-manual',
+    example: 'Dacia Sandero, Suzuki Swift or similar',
+    image: '/images/categoryCmanual.png',
+    images: ['/images/categoryCmanual.png'],
+    carId: 10,
+    description: 'Vehicles of Category C (Dacia Sandero, Suzuki Swift or similar) are practical, comfortable, spacious and economical. They offer safety and stability during your vacation in Greece, can be easily driven anywhere in Athens and are also a pleasure to drive on highways. They are environmentally friendly and very fuel efficient cars. For that reasons Vehicles of Category C are your best choice for economy touring all around Greece. Vehicles of Category C will never let you down, guaranteeing a pleasant holiday in Greece.',
+    priceNote: 'Our rates are in Euro, all inclusive and with no "Hidden Extras"',
+    specs: { seats: '5', airBag: 'Yes', luggage: '270 to 330L', fuel: 'Unleaded or Diesel', doors: '5', cdPlayer: 'Yes', abs: 'Yes', ac: 'Yes', gear: 'Manual' },
+    ratesInclude: categoryBRates,
+  }),
+  createCategory({
+    code: 'D',
+    name: 'Category D Manual',
+    transmission: 'Manual',
+    seats: 5,
+    model: 'Seat Arona, VW T-Cross',
+    slug: 'category-d-manual',
+    example: 'Seat Arona, VW T-Cross or similar',
+    image: '/images/CategoryDmanual.png',
+    images: ['/images/CategoryDmanual.png'],
+    carId: 12,
+    description: 'Elegant cars for families or groups of friends of five persons, which provide top class performance, comfort and safety. The Vehicles of Category D (Seat Arona, VW T-Cross or similar) are comfortable cars that offer safety and stability during your vacation in Greece. They are environmentally friendly and very fuel efficient cars. For that reasons Vehicles of Category D are your best choice for economy touring all around Greece.',
+    priceNote: 'Our rates are in Euro, all inclusive and with no "Hidden Extras"',
+    specs: { seats: '5', airBag: 'Yes', luggage: '360 to 390L', fuel: 'Unleaded 95 Fuel', doors: '4', cdPlayer: 'Yes', abs: 'Yes', ac: 'Yes', gear: 'Manual' },
+    ratesInclude: categoryBRates,
+  }),
+  createCategory({
+    code: 'D1',
+    name: 'Category D1 Manual',
+    transmission: 'Manual',
+    image: '/images/CategoryD1Manual.png',
+    images: ['/images/CategoryD1Manual.png'],
+  }),
+  createCategory({
+    code: 'D3',
+    name: 'Category D3 Manual',
+    transmission: 'Manual',
+    model: 'Suzuki Vitara',
+    image: '/images/CategoryD3Manual.png',
+    images: ['/images/CategoryD3Manual.png'],
+  }),
+  createCategory({ code: 'E', name: 'Category E Automatic', transmission: 'Automatic' }),
+  createCategory({
+    code: 'E1',
+    name: 'Category E1 Automatic',
+    transmission: 'Automatic',
+    image: '/images/CategoryE1AUTOMATIC.png',
+    images: ['/images/CategoryE1AUTOMATIC.png'],
+  }),
+  createCategory({ code: 'E2', name: 'Category E2 Automatic', transmission: 'Automatic', model: 'Skoda Scala' }),
+  createCategory({
+    code: 'E3',
+    name: 'Category E3 Automatic',
+    transmission: 'Automatic',
+    model: 'Toyota Corolla',
+    image: '/images/CategoryE3Automatic.png',
+    images: ['/images/CategoryE3Automatic.png'],
+  }),
+  createCategory({
+    code: 'G',
+    name: 'Category G Automatic',
+    transmission: 'Automatic',
+    image: '/images/CategoryGAutomatic.png',
+    images: ['/images/CategoryGAutomatic.png'],
+  }),
+  createCategory({
+    code: 'G1',
+    name: 'Category G1 Automatic',
+    transmission: 'Automatic',
+    image: '/images/G1Automatic.PNG',
+    images: ['/images/G1Automatic.PNG'],
+  }),
+  createCategory({
+    code: 'G2',
+    name: 'Category G2 - 7 Seats (5+2) Automatic',
+    transmission: 'Automatic',
+    seats: 7,
+    image: '/images/categoryG2.PNG',
+    images: ['/images/categoryG2.PNG'],
+  }),
+  createCategory({ code: 'F', name: 'Category F - 7 Seats Manual', transmission: 'Manual', seats: 7, model: 'Toyota Proace City' }),
+  createCategory({ code: 'F1', name: 'Category F1 - 9 Seats Manual', transmission: 'Manual', seats: 9 }),
+  createCategory({ code: 'F2', name: 'Category F2 - 7 Seats Automatic', transmission: 'Automatic', seats: 7, model: 'Toyota Proace City' }),
+  createCategory({ code: 'F3', name: 'Category F3 - 7 Seats Automatic', transmission: 'Automatic', seats: 7, model: 'VW Caddy Maxi' }),
+  createCategory({ code: 'F4', name: 'Category F4 - 8 Seats Automatic', transmission: 'Automatic', seats: 8 }),
+  createCategory({ code: 'F5', name: 'Category F5 - 9 Seats Automatic', transmission: 'Automatic', seats: 9 }),
+  createCategory({ code: 'L1', name: 'Category L1 Luxury Automatic', transmission: 'Automatic', model: 'BMW X1' }),
+  createCategory({ code: 'L2', name: 'Category L2 Luxury Automatic', transmission: 'Automatic', model: 'Mercedes GLB' }),
+  createCategory({ code: 'V', name: 'Category V Manual - Small Van', transmission: 'Manual', model: 'Renault Trafic' }),
+  createCategory({ code: 'V1', name: 'Category V1 Manual - Large Van', transmission: 'Manual' }),
+  createCategory({ code: 'L5', name: 'Category Diesel L5 - 9 Seats Auto', transmission: 'Automatic', seats: 9 }),
+]
+
+export const categoryFilters = [
+  { id: 'all', label: 'All' },
+  { id: 'standard', label: 'Standard' },
+  { id: 'automatic', label: 'Automatic Cars' },
+  { id: 'minivans', label: 'Mini Vans' },
+  { id: 'minivanAutomatic', label: 'Mini Van Automatic' },
+  { id: 'suv', label: "SUV's" },
+  { id: 'luxury', label: 'Luxury Cars' },
+]

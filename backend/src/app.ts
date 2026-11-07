@@ -19,7 +19,25 @@ const app = express();
 
 app.disable("x-powered-by");
 app.use(helmet());
-app.use(cors({ origin: corsOrigins }));
+app.use(cors({
+  origin: (origin, callback) => {
+    if (!origin) {
+      callback(null, true);
+      return;
+    }
+
+    const isAllowed = corsOrigins.includes("*") || corsOrigins.includes(origin);
+    if (isAllowed) {
+      callback(null, true);
+      return;
+    }
+
+    callback(new Error("Not allowed by CORS"));
+  },
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization", "Accept", "Accept-Language", "X-Requested-With"],
+}));
 app.use(express.json({ limit: "1mb" }));
 app.use(rateLimit({ windowMs: 15 * 60 * 1000, limit: 100 }));
 
@@ -62,6 +80,27 @@ const openApiDocument = {
     },
   },
   paths: {
+    "/cookie-consent": {
+      get: { summary: "Get the browser's saved cookie consent choice" },
+      put: {
+        summary: "Save or update the browser's cookie consent choice",
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                required: ["choice"],
+                properties: {
+                  choice: { type: "string", enum: ["accepted", "refused", "customized"] },
+                },
+              },
+            },
+          },
+        },
+        responses: { "200": { description: "Cookie preference saved" }, "400": { description: "Invalid consent choice" } },
+      },
+    },
     "/home": { get: { summary: "Homepage slides, banners and selling points" } },
     "/vehicles": { get: { summary: "List vehicle categories with filters and pagination" } },
     "/vehicles/{slug}": { get: { summary: "Get a vehicle category" } },

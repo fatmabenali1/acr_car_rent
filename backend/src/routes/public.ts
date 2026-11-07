@@ -1,11 +1,32 @@
+import { createHash, randomBytes } from "node:crypto";
 import { Router } from "express";
-import { FuelType, Transmission, VehicleGroup } from "@prisma/client";
+import { CookieConsentChoice, FuelType, Transmission, VehicleGroup } from "@prisma/client";
 import { z } from "zod";
 import { env } from "../config/env";
 import { prisma } from "../db";
 import { AppError } from "../middleware/errors";
 
 const publicRouter = Router();
+const cookieConsentName = "acr_cookie_consent";
+const cookieConsentLifetimeMs = 365 * 24 * 60 * 60 * 1000;
+const cookieConsentChoiceMap = {
+  accepted: CookieConsentChoice.ACCEPTED,
+  refused: CookieConsentChoice.REFUSED,
+  customized: CookieConsentChoice.CUSTOMIZED,
+} as const;
+
+function getCookieConsentToken(cookieHeader: string | undefined): string | null {
+  const cookie = cookieHeader
+    ?.split(";")
+    .map((part) => part.trim())
+    .find((part) => part.startsWith(`${cookieConsentName}=`));
+  const token = cookie?.slice(cookieConsentName.length + 1);
+  return token && /^[a-f0-9]{64}$/.test(token) ? token : null;
+}
+
+function hashCookieConsentToken(token: string): string {
+  return createHash("sha256").update(token).digest("hex");
+}
 
 const languageSchema = z.enum(["en", "el"]).default("en");
 const vehicleGroupSchema = z.enum([
@@ -105,6 +126,55 @@ const vehicleSelect = {
   minimumDriverAge: true,
   displayOrder: true,
 } as const;
+
+publicRouter.get("/cookie-consent", async (request, response) => {
+  const token = getCookieConsentToken(request.headers.cookie);
+  if (!token) {
+    success(response, null, "en");
+    return;
+  }
+
+  const consent = await prisma.cookieConsent.findFirst({
+    where: { id: hashCookieConsentToken(token), expiresAt: { gt: new Date() } },
+    select: { choice: true, updatedAt: true },
+  });
+  success(response, consent ? {
+    choice: consent.choice.toLowerCase(),
+    updatedAt: consent.updatedAt,
+  } : null, "en");
+});
+
+publicRouter.put("/cookie-consent", async (request, response) => {
+  const { choice } = z.object({
+    choice: z.enum(["accepted", "refused", "customized"]),
+  }).parse(request.body);
+  const token = getCookieConsentToken(request.headers.cookie) ?? randomBytes(32).toString("hex");
+  const tokenHash = hashCookieConsentToken(token);
+  const expiresAt = new Date(Date.now() + cookieConsentLifetimeMs);
+  const consentChoice = cookieConsentChoiceMap[choice];
+  const consent = await prisma.cookieConsent.upsert({
+    where: { id: tokenHash },
+    update: { choice: consentChoice, expiresAt },
+    create: {
+      id: tokenHash,
+      choice: consentChoice,
+      expiresAt,
+    },
+    select: { choice: true, updatedAt: true },
+  });
+
+  response.cookie(cookieConsentName, token, {
+    httpOnly: true,
+    secure: env.NODE_ENV === "production",
+    sameSite: "lax",
+    path: "/",
+    maxAge: cookieConsentLifetimeMs,
+  });
+  success(response, {
+    choice: consent.choice.toLowerCase(),
+    updatedAt: consent.updatedAt,
+  }, "en");
+});
 
 publicRouter.get("/home", async (request, response) => {
   const lang = getLanguage(request.query);
