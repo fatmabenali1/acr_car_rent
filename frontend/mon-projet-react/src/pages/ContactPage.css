@@ -1,0 +1,358 @@
+.contact-page {
+  --contact-yellow: #ffc400;
+  --contact-ink: #111;
+  background: #f7f4ef;
+  color: var(--contact-ink);
+}
+
+.contact-hero {
+  background: #0b0b0d;
+  color: #fff;
+}
+
+.contact-hero-inner,
+.contact-main {
+  width: min(1200px, calc(100% - 3rem));
+  margin: 0 auto;
+}
+
+.contact-hero-inner {
+  padding: 1.35rem 0 3.5rem;
+}
+
+.contact-breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  color: rgba(255, 255, 255, 0.58);
+  font-size: 0.8rem;
+}
+
+.contact-breadcrumb a {
+  color: rgba(255, 255, 255, 0.78);
+  transition: color 180ms ease;
+}
+
+.contact-breadcrumb a:hover {
+  color: var(--contact-yellow);
+}
+
+.contact-hero-copy {
+  margin-top: 2.4rem;
+  text-align: center;
+}
+
+.contact-eyebrow {
+  margin: 0 0 0.55rem;
+  color: #b98500;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.17em;
+}
+
+.contact-hero .contact-eyebrow {
+  color: var(--contact-yellow);
+}
+
+.contact-hero h1 {
+  margin: 0;
+  color: #fff;
+  font-size: clamp(2.5rem, 5vw, 4.4rem);
+  font-weight: 800;
+  letter-spacing: -0.055em;
+  line-height: 1.08;
+}
+
+.contact-hero h1 span {
+  color: var(--contact-yellow);
+}
+
+.contact-hero-copy > p:last-child {
+  margin-top: 0.9rem;
+  color: rgba(255, 255, 255, 0.68);
+  font-size: 1rem;
+}
+
+.contact-main {
+  padding: 4rem 0 4.5rem;
+}
+
+.contact-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
+  align-items: stretch;
+  gap: 2rem;
+}
+
+.contact-map-card,
+.contact-information {
+  min-width: 0;
+  min-height: 460px;
+  border: 3px solid var(--contact-yellow);
+  border-radius: 20px;
+  box-shadow: 0 14px 34px rgba(17, 17, 17, 0.09);
+  opacity: 0;
+  animation: contact-appear 550ms ease forwards;
+}
+
+.contact-map-card {
+  position: relative;
+  overflow: hidden;
+  background: #e9e5dc;
+}
+
+.contact-map-card iframe {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.contact-map-link {
+  position: absolute;
+  bottom: 1.15rem;
+  left: 1.15rem;
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  justify-content: center;
+  gap: 0.55rem;
+  padding: 0.7rem 1rem;
+  border-radius: 999px;
+  background: var(--contact-yellow);
+  color: #111;
+  box-shadow: 0 5px 16px rgba(0, 0, 0, 0.2);
+  font-size: 0.8rem;
+  font-weight: 800;
+  transition: transform 180ms ease, background 180ms ease;
+}
+
+.contact-map-link svg,
+.contact-action svg {
+  width: 18px;
+  height: 18px;
+  flex: none;
+}
+
+.contact-map-link:hover {
+  transform: translateY(-2px);
+  background: #ffd43b;
+}
+
+.contact-information {
+  display: flex;
+  flex-direction: column;
+  padding: 2rem;
+  background: #fff;
+  animation-delay: 100ms;
+}
+
+.contact-information-heading h2 {
+  margin: 0;
+  color: #151515;
+  font-size: clamp(1.45rem, 2.5vw, 1.9rem);
+  font-weight: 800;
+  letter-spacing: -0.045em;
+  text-transform: uppercase;
+}
+
+.contact-information-heading > span {
+  display: block;
+  width: 48px;
+  height: 3px;
+  margin-top: 0.9rem;
+  border-radius: 2px;
+  background: var(--contact-yellow);
+}
+
+.contact-company-name {
+  margin: 1rem 0 0;
+  color: #222;
+  font-size: 0.95rem;
+  font-weight: 800;
+}
+
+.contact-details {
+  display: grid;
+  margin-top: 0.7rem;
+}
+
+.contact-detail {
+  display: grid;
+  grid-template-columns: 40px minmax(0, 1fr);
+  align-items: center;
+  gap: 0.85rem;
+  padding: 0.9rem 0.55rem;
+  border-bottom: 1px solid #eeeae2;
+  border-radius: 8px;
+  transition: background 180ms ease;
+}
+
+.contact-detail:hover {
+  background: #faf8f2;
+}
+
+.contact-detail:last-child {
+  border-bottom: 0;
+}
+
+.contact-detail-icon {
+  display: grid;
+  width: 40px;
+  height: 40px;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--contact-yellow);
+  color: #111;
+}
+
+.contact-detail-icon svg {
+  width: 19px;
+  height: 19px;
+}
+
+.contact-detail > div {
+  display: grid;
+  min-width: 0;
+  gap: 0.2rem;
+}
+
+.contact-detail-label {
+  color: #77736b;
+  font-size: 0.7rem;
+  font-weight: 600;
+}
+
+.contact-detail-value {
+  color: #171717;
+  font-size: 0.81rem;
+  font-weight: 750;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.contact-detail a:hover {
+  color: #805f00;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.contact-detail-values {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 0.9rem;
+}
+
+.contact-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+  margin-top: auto;
+  padding-top: 1rem;
+}
+
+.contact-action {
+  display: inline-flex;
+  min-height: 48px;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  border-radius: 999px;
+  font-size: 0.79rem;
+  font-weight: 800;
+  text-align: center;
+  transition: transform 180ms ease, background 180ms ease;
+}
+
+.contact-action:hover {
+  transform: translateY(-2px);
+}
+
+.contact-action-primary {
+  background: var(--contact-yellow);
+  color: #111;
+}
+
+.contact-action-primary:hover {
+  background: #ffd43b;
+}
+
+.contact-action-secondary {
+  background: #0b0b0d;
+  color: #fff;
+}
+
+.contact-action-secondary:hover {
+  background: #292929;
+}
+
+.contact-page a:focus-visible {
+  outline: 3px solid #c79700;
+  outline-offset: 3px;
+}
+
+@keyframes contact-appear {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 900px) {
+  .contact-grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 1.5rem;
+  }
+
+  .contact-map-card {
+    min-height: 320px;
+  }
+}
+
+@media (max-width: 600px) {
+  .contact-hero-inner,
+  .contact-main {
+    width: min(100% - 1.4rem, 1200px);
+  }
+
+  .contact-hero-inner {
+    padding-top: 1rem;
+    padding-bottom: 2.7rem;
+  }
+
+  .contact-hero-copy {
+    margin-top: 2rem;
+  }
+
+  .contact-main {
+    padding: 2rem 0 2.5rem;
+  }
+
+  .contact-information {
+    padding: 1.35rem;
+  }
+
+  .contact-detail {
+    gap: 0.7rem;
+    padding-right: 0.25rem;
+    padding-left: 0.25rem;
+  }
+
+  .contact-actions {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .contact-map-card,
+  .contact-information {
+    opacity: 1;
+    animation: none;
+  }
+}

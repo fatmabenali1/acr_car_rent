@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { getHome } from './api/home'
 import { getVehicleGroups, getVehicles } from './api/vehicles'
 import { getLocations } from './api/locations'
@@ -22,6 +22,8 @@ import { StaticPages } from './pages/StaticPages'
 import { BookingPage } from './pages/BookingPage'
 import { PricelistPage } from './pages/PricelistPage'
 import { CategoryDetailPage } from './pages/CategoryDetailPage'
+import { FaqPage } from './pages/FaqPage'
+import { ContactPage } from './pages/ContactPage'
 import './App.css'
 
 const FALLBACK_IMAGE = 'https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?auto=format&fit=crop&w=1200&q=80'
@@ -41,6 +43,10 @@ function resolveRoute(pathname = window.location.pathname) {
   const path = pathname.replace(/\/+$/, '') || '/'
   const detailMatch = path.match(/^\/fleet\/([^/]+)$/)
 
+  if (path === '/faq') return { page: 'faq', slug: '' }
+  if (path === '/contact') return { page: 'contact', slug: '' }
+  if (path === '/pay') return { page: 'payment', slug: '' }
+  if (path === '/rental-conditions') return { page: 'static', slug: '' }
   if (path === '/booking') return { page: 'booking', slug: '' }
   if (path === '/pricelist') return { page: 'pricelist', slug: '' }
   if (detailMatch) return { page: 'category-detail', slug: decodeURIComponent(detailMatch[1]) }
@@ -54,6 +60,10 @@ function App() {
   const [categorySlug, setCategorySlug] = useState(() => resolveRoute().slug)
   const [menuOpen, setMenuOpen] = useState(false)
   const [infoMenuOpen, setInfoMenuOpen] = useState(false)
+  const infoMenuRef = useRef(null)
+  const mobileInfoMenuRef = useRef(null)
+  const infoMenuButtonRef = useRef(null)
+  const mobileInfoMenuButtonRef = useRef(null)
   const [scrolled, setScrolled] = useState(false)
   const [homeData, setHomeData] = useState({ slides: [], banners: [], arguments: [] })
   const [offers, setOffers] = useState([])
@@ -78,11 +88,39 @@ function App() {
       const route = resolveRoute()
       setActivePage(route.page)
       setCategorySlug(route.slug)
+      setInfoMenuOpen(false)
+      setMenuOpen(false)
     }
 
     window.addEventListener('popstate', handlePopState)
     return () => window.removeEventListener('popstate', handlePopState)
   }, [])
+
+  useEffect(() => {
+    if (!infoMenuOpen) return undefined
+
+    const handleDocumentMouseDown = (event) => {
+      const inDesktopMenu = infoMenuRef.current?.contains(event.target)
+      const inMobileMenu = mobileInfoMenuRef.current?.contains(event.target)
+      if (!inDesktopMenu && !inMobileMenu) setInfoMenuOpen(false)
+    }
+    const handleDocumentKeyDown = (event) => {
+      if (event.key === 'Escape') {
+        setInfoMenuOpen(false)
+        const trigger = window.matchMedia('(max-width: 1023px)').matches
+          ? mobileInfoMenuButtonRef.current
+          : infoMenuButtonRef.current
+        trigger?.focus()
+      }
+    }
+
+    document.addEventListener('mousedown', handleDocumentMouseDown)
+    document.addEventListener('keydown', handleDocumentKeyDown)
+    return () => {
+      document.removeEventListener('mousedown', handleDocumentMouseDown)
+      document.removeEventListener('keydown', handleDocumentKeyDown)
+    }
+  }, [infoMenuOpen])
 
   useEffect(() => {
     let active = true
@@ -203,7 +241,7 @@ function App() {
       }
     }
 
-    if (activePage === 'static' || activePage === 'faq' || activePage === 'locations' || activePage === 'contact') {
+    if (activePage === 'static' || activePage === 'locations') {
       loadStatic()
     }
   }, [activePage, lang])
@@ -242,6 +280,14 @@ function App() {
 
     if (activePage === 'category-detail') {
       return <CategoryDetailPage slug={categorySlug} />
+    }
+
+    if (activePage === 'faq') {
+      return <FaqPage />
+    }
+
+    if (activePage === 'contact') {
+      return <ContactPage />
     }
 
     if (activePage === 'home') {
@@ -314,21 +360,35 @@ function App() {
   }
 
   const onNavClick = (key) => {
-    const routePath = key === 'fleet' ? '/pricelist' : key === 'home' ? '/' : null
-    if (routePath) {
-      window.history.pushState({}, '', routePath)
-      setCategorySlug('')
+    const routePaths = {
+      home: '/',
+      fleet: '/pricelist',
+      static: '/rental-conditions',
+      faq: '/faq',
+      contact: '/contact',
+      payment: '/pay',
     }
+    const routePath = routePaths[key]
+    if (routePath && window.location.pathname !== routePath) {
+      window.history.pushState({}, '', routePath)
+    }
+    if (routePath) setCategorySlug('')
     setActivePage(key === 'fleet' ? 'pricelist' : key)
     setMenuOpen(false)
     setInfoMenuOpen(false)
   }
 
   const infoItems = [
-    { key: 'static', label: { en: 'Rental conditions', el: 'Όροι ενοικίασης' } },
-    { key: 'faq', label: { en: 'FAQ', el: 'Συχνές ερωτήσεις' } },
-    { key: 'payment', label: { en: 'Secure payment', el: 'Ασφαλής πληρωμή' } },
+    { key: 'static', href: '/rental-conditions', label: { en: 'Rental conditions', el: 'Όροι ενοικίασης' } },
+    { key: 'faq', href: '/faq', label: { en: 'FAQ', el: 'Συχνές ερωτήσεις' } },
+    { key: 'payment', href: '/pay', label: { en: 'Secure payment', el: 'Ασφαλής πληρωμή' } },
   ]
+
+  const handleInfoLinkClick = (event, key) => {
+    if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return
+    event.preventDefault()
+    onNavClick(key)
+  }
 
   return (
     <div className="bg-[#f7f4ef] text-slate-800 antialiased">
@@ -446,16 +506,15 @@ function App() {
                 )
               })}
 
-              <div className="relative group">
+              <div ref={infoMenuRef} className={`relative ${infoMenuOpen ? 'z-[60]' : ''}`}>
                 <button
+                  ref={infoMenuButtonRef}
                   type="button"
                   className={`inline-flex items-center gap-1 border-0 bg-transparent px-1 py-2 text-sm font-semibold text-slate-700 transition-colors hover:text-navy focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 ${
                     infoItems.some((item) => item.key === activePage) ? 'border-b-2 border-accent text-navy' : 'border-transparent'
                   }`}
                   aria-haspopup="menu"
                   aria-expanded={infoMenuOpen}
-                  onMouseEnter={() => setInfoMenuOpen(true)}
-                  onMouseLeave={() => setInfoMenuOpen(false)}
                   onClick={() => setInfoMenuOpen((open) => !open)}
                 >
                   Infos
@@ -465,30 +524,26 @@ function App() {
                 </button>
 
                 {infoMenuOpen && (
-                  <div
-                    className="absolute left-0 mt-3 w-56 rounded-xl border border-slate-200 bg-white p-2 shadow-soft"
-                    role="menu"
-                    aria-label="Information links"
-                    onMouseEnter={() => setInfoMenuOpen(true)}
-                    onMouseLeave={() => setInfoMenuOpen(false)}
-                  >
-                    {infoItems.map((item) => {
-                      const label = item.label[lang] || item.label.en
-                      const isActive = activePage === item.key
-                      return (
-                        <button
-                          key={item.key}
-                          type="button"
-                          role="menuitem"
-                          className={`block w-full rounded-lg border-0 bg-transparent px-3 py-2 text-left text-sm font-medium text-slate-700 transition-colors ${
-                            isActive ? 'bg-slate-50 text-navy' : 'hover:bg-slate-50 hover:text-navy'
-                          }`}
-                          onClick={() => onNavClick(item.key)}
-                        >
-                          {label}
-                        </button>
-                      )
-                    })}
+                  <div className="absolute left-0 top-full z-[1000] w-56 pt-2">
+                    <div className="rounded-xl border border-slate-200 bg-white p-2 shadow-soft" role="menu" aria-label="Information links">
+                      {infoItems.map((item) => {
+                        const label = item.label[lang] || item.label.en
+                        const isActive = activePage === item.key
+                        return (
+                          <a
+                            key={item.key}
+                            href={item.href}
+                            role="menuitem"
+                            className={`block w-full cursor-pointer rounded-lg px-3 py-2 text-left text-sm font-medium text-slate-700 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent ${
+                              isActive ? 'bg-slate-50 text-navy' : 'hover:bg-slate-50 hover:text-navy'
+                            }`}
+                            onClick={(event) => handleInfoLinkClick(event, item.key)}
+                          >
+                            {label}
+                          </a>
+                        )
+                      })}
+                    </div>
                   </div>
                 )}
               </div>
@@ -577,12 +632,27 @@ function App() {
                     </button>
                   ))}
 
-                  <div className="rounded-xl border border-slate-200 bg-slate-50 p-2">
-                    <div className="mb-2 px-2 text-xs font-bold uppercase tracking-[0.12em] text-slate-500">Infos</div>
-                    {infoItems.map((item) => (
-                      <button key={item.key} type="button" onClick={() => onNavClick(item.key)} className="block w-full rounded-lg bg-transparent px-3 py-3 text-left text-base font-medium text-slate-700 transition-colors hover:bg-white hover:text-navy">
+                  <div ref={mobileInfoMenuRef} className="rounded-xl border border-slate-200 bg-slate-50 p-2">
+                    <button
+                      ref={mobileInfoMenuButtonRef}
+                      type="button"
+                      className="mb-2 flex w-full items-center justify-between px-2 py-1 text-left text-xs font-bold uppercase tracking-[0.12em] text-slate-500"
+                      aria-haspopup="true"
+                      aria-expanded={infoMenuOpen}
+                      onClick={() => setInfoMenuOpen((open) => !open)}
+                    >
+                      Infos
+                      <span aria-hidden="true">{infoMenuOpen ? '−' : '+'}</span>
+                    </button>
+                    {infoMenuOpen && infoItems.map((item) => (
+                      <a
+                        key={item.key}
+                        href={item.href}
+                        onClick={(event) => handleInfoLinkClick(event, item.key)}
+                        className="block w-full cursor-pointer rounded-lg bg-transparent px-3 py-3 text-left text-base font-medium text-slate-700 transition-colors hover:bg-white hover:text-navy focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+                      >
                         {item.label[lang] || item.label.en}
-                      </button>
+                      </a>
                     ))}
                   </div>
 
