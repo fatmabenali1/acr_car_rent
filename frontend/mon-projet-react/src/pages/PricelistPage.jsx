@@ -126,14 +126,21 @@ function CategoryImage({
   )
 }
 
-export function VehicleCategoryCard({ category, imageLoading = 'lazy', earlyBird = false }) {
+export function VehicleCategoryCard({ category, imageLoading = 'lazy', earlyBird = false, lang = 'en' }) {
+  const isGreek = lang === 'el'
+  const vehicleType = isGreek
+    ? ({ Manual: 'Χειροκίνητο', Automatic: 'Αυτόματο', Luxury: 'Πολυτελές', Van: 'Φορτηγάκι' }[category.type] || category.type)
+    : category.type
+  const specLabels = isGreek
+    ? { seats: 'Θέσεις', airBag: 'Αερόσακος', luggage: 'Αποσκευές', fuel: 'Καύσιμο', doors: 'Πόρτες', cdPlayer: 'CD player', abs: 'ABS', ac: 'Κλιματισμός', gear: 'Κιβώτιο' }
+    : { seats: 'Seats', airBag: 'Air Bag', luggage: 'Luggage', fuel: 'Fuel Type', doors: 'Doors', cdPlayer: 'CD Player', abs: 'ABS', ac: 'A/C', gear: 'Gear' }
   if (earlyBird) {
     return (
       <article className="flex h-full flex-col overflow-hidden rounded-3xl bg-white p-6 shadow-lg ring-2 ring-[#FACC15] transition duration-300 hover:-translate-y-1 hover:shadow-xl motion-reduce:transform-none motion-reduce:transition-none">
         <div className="relative mt-4 aspect-[4/3] rounded-2xl bg-white">
           <CategoryImage category={category} loading={imageLoading} fallbackSize={64} exactAlt fallbackBackground="bg-white" lucideFallback />
           <span className="absolute left-3 top-3 rounded-full bg-[#111111] px-3 py-1 text-xs font-bold uppercase text-[#FACC15]">
-            {category.type}
+            {vehicleType}
           </span>
         </div>
         <div className="flex flex-1 flex-col pt-5">
@@ -145,7 +152,7 @@ export function VehicleCategoryCard({ category, imageLoading = 'lazy', earlyBird
               if (value === null || value === undefined || value === '') return null
               const itemLabel = key === 'luggage' && category.specs?.luggageLabel
                 ? category.specs.luggageLabel
-                : label
+                : specLabels[key] || label
               return (
                 <div key={key} className="flex items-center gap-3 border-b border-slate-200 py-2.5">
                   <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#FEF3C7] text-[#111111]" aria-hidden="true">
@@ -164,13 +171,13 @@ export function VehicleCategoryCard({ category, imageLoading = 'lazy', earlyBird
               href={`/booking?category=${encodeURIComponent(category.slug)}&source=early-bird`}
               className="inline-flex h-12 w-full items-center justify-center rounded-xl bg-[#FACC15] font-extrabold text-[#111111] shadow-md transition hover:-translate-y-0.5 hover:bg-[#EAB308] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#111111] focus-visible:ring-offset-2 motion-reduce:transition-none motion-reduce:hover:translate-y-0"
             >
-              Request a quote
+              {isGreek ? 'Ζητήστε προσφορά' : 'Request a quote'}
             </a>
             <a
               href={`/fleet/${category.slug}`}
               className="mt-3 inline-flex w-full justify-center rounded-lg py-1 text-sm font-semibold text-[#111111] underline decoration-[#FACC15] decoration-2 underline-offset-4 hover:bg-[#FEF3C7] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#111111] focus-visible:ring-offset-2"
             >
-              View vehicle details
+              {isGreek ? 'Προβολή στοιχείων οχήματος' : 'View vehicle details'}
             </a>
           </div>
         </div>
@@ -186,26 +193,26 @@ export function VehicleCategoryCard({ category, imageLoading = 'lazy', earlyBird
       <div className="relative aspect-[4/3] overflow-hidden bg-[#F7F4EF]">
         <CategoryImage category={category} loading={imageLoading} />
         <span className="absolute left-4 top-4 rounded-full bg-[#111111] px-3 py-1 text-xs font-bold uppercase text-[#FACC15]">
-          {category.type}
+          {vehicleType}
         </span>
       </div>
       <div className="flex flex-1 flex-col p-6">
         <h2 className="mb-0 min-h-[3.5rem] text-lg font-extrabold uppercase leading-tight text-[#111111]">
           {category.name}
         </h2>
-        {category.example && <p className="mt-1 text-sm text-slate-600">Example: {category.example}</p>}
-        <p className="mt-3 line-clamp-3 text-sm leading-relaxed text-slate-600">{category.description}</p>
+        {category.example && <p className="mt-1 text-sm text-slate-600">{isGreek ? 'Ενδεικτικό μοντέλο:' : 'Example:'} {category.example}</p>}
+        <p className="mt-3 line-clamp-3 text-sm leading-relaxed text-slate-600">{isGreek ? (category.descriptionEl || category.description) : category.description}</p>
         <div className="mt-4 flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-600">
           {category.specs?.seats && (
             <span className="inline-flex items-center gap-1.5">
               <CategoryIcon name="users" />
-              {category.specs.seats}
+              {category.specs.seats} {isGreek ? 'θέσεις' : ''}
             </span>
           )}
           {category.specs?.gear && (
             <span className="inline-flex items-center gap-1.5">
               <CategoryIcon name="settings-2" />
-              {category.specs.gear}
+              {isGreek ? ({ Manual: 'Χειροκίνητο', Automatic: 'Αυτόματο' }[category.specs.gear] || category.specs.gear) : category.specs.gear}
             </span>
           )}
           {category.specs?.luggage && (
@@ -217,7 +224,7 @@ export function VehicleCategoryCard({ category, imageLoading = 'lazy', earlyBird
         </div>
         <div className="mt-auto pt-5">
           <span className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[#111111] px-5 py-3 text-sm font-bold text-white transition hover:bg-[#2B2B2B]">
-            View details
+            {isGreek ? 'Προβολή λεπτομερειών' : 'View details'}
             <CategoryIcon name="arrow-right" className="text-[#FACC15]" />
           </span>
         </div>
@@ -226,7 +233,8 @@ export function VehicleCategoryCard({ category, imageLoading = 'lazy', earlyBird
   )
 }
 
-export function PricelistPage() {
+export function PricelistPage({ lang = 'en' }) {
+  const isGreek = lang === 'el'
   const [activeFilter, setActiveFilter] = useState(() => {
     const filter = new URLSearchParams(window.location.search).get('filter')
     return categoryFilters.some(({ id }) => id === filter) ? filter : 'all'
@@ -235,11 +243,11 @@ export function PricelistPage() {
 
   useEffect(() => {
     const previousTitle = document.title
-    document.title = 'Pricelist & Fleet | Athens Car Rental'
+    document.title = isGreek ? 'Τιμοκατάλογος και Στόλος | Athens Car Rental' : 'Pricelist & Fleet | Athens Car Rental'
     return () => {
       document.title = previousTitle
     }
-  }, [])
+  }, [isGreek])
 
   const visibleCategories = useMemo(
     () => activeFilter === 'all'
@@ -261,27 +269,27 @@ export function PricelistPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#F7F4EF] pb-24 text-[#111111]">
+    <div className="min-h-screen bg-[#F7F4EF] pb-24 text-[#111111]" lang={lang}>
       <section className="relative isolate overflow-hidden bg-[#111111] pb-24 lg:pb-28">
         <img src="/images/image.png" alt="" className="absolute inset-0 -z-10 h-full w-full object-cover object-[75%_30%] opacity-40" />
         <div className="absolute inset-0 bg-gradient-to-r from-black/90 via-black/70 to-black/30" aria-hidden="true" />
         <div className="relative z-10 mx-auto w-full max-w-[1760px] px-4 pt-8 sm:px-6 lg:px-10 lg:pt-10 2xl:px-16">
-          <nav aria-label="Breadcrumb" className="text-sm text-white/70">
-            <a href="/" className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FACC15] focus-visible:ring-offset-2 focus-visible:ring-offset-[#111111]">Home</a>
+          <nav aria-label={isGreek ? 'Διαδρομή πλοήγησης' : 'Breadcrumb'} className="text-sm text-white/70">
+            <a href="/" className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FACC15] focus-visible:ring-offset-2 focus-visible:ring-offset-[#111111]">{isGreek ? 'Αρχική' : 'Home'}</a>
             <span className="mx-2" aria-hidden="true">/</span>
-            <span aria-current="page">Pricelist &amp; Fleet</span>
+            <span aria-current="page">{isGreek ? 'Τιμοκατάλογος και στόλος' : 'Pricelist &amp; Fleet'}</span>
           </nav>
           <h1 className="mt-4 text-3xl font-extrabold text-white lg:text-5xl">
-            Pricelist &amp; <span className="text-[#FACC15]">Fleet</span>
+            {isGreek ? 'Τιμοκατάλογος και ' : 'Pricelist &amp; '}<span className="text-[#FACC15]">{isGreek ? 'στόλος' : 'Fleet'}</span>
           </h1>
           <p className="mt-2 max-w-3xl text-sm text-white/80 sm:text-base">
-            Choose a category, compare vehicles and find the right car for your trip in Greece.
+            {isGreek ? 'Επιλέξτε κατηγορία, συγκρίνετε οχήματα και βρείτε το κατάλληλο αυτοκίνητο για το ταξίδι σας στην Ελλάδα.' : 'Choose a category, compare vehicles and find the right car for your trip in Greece.'}
           </p>
         </div>
       </section>
 
       <div className="mx-auto w-full max-w-[1760px] px-4 sm:px-6 lg:px-10 2xl:px-16">
-        <section aria-label="Filter vehicle categories" className="relative z-10 -mt-10 rounded-3xl bg-white p-4 shadow-xl ring-2 ring-[#FACC15] lg:p-5">
+        <section aria-label={isGreek ? 'Φιλτράρισμα κατηγοριών οχημάτων' : 'Filter vehicle categories'} className="relative z-10 -mt-10 rounded-3xl bg-white p-4 shadow-xl ring-2 ring-[#FACC15] lg:p-5">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div className="overflow-x-auto">
               <div className="flex min-w-max flex-nowrap gap-2">
@@ -295,14 +303,23 @@ export function PricelistPage() {
                       onClick={() => chooseFilter(id)}
                       className={`rounded-full px-5 py-2.5 text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#111111] focus-visible:ring-offset-2 motion-reduce:transition-none ${selected ? 'bg-[#111111] text-[#FACC15]' : 'bg-[#F7F4EF] text-[#111111] ring-1 ring-black/10 hover:bg-[#FEF3C7]'}`}
                     >
-                      {label}
+                      {isGreek ? ({
+                        all: 'Όλες',
+                        standard: 'Στάνταρ',
+                        automatic: 'Αυτόματα',
+                        minivans: 'Μίνι βαν',
+                        minivanAutomatic: 'Αυτόματα μίνι βαν',
+                        suv: 'SUV',
+                        luxury: 'Πολυτελή',
+                        vans: 'Φορτηγάκια',
+                      }[id] || label) : label}
                     </button>
                   )
                 })}
               </div>
             </div>
             <p className="shrink-0 text-sm text-slate-600" aria-live="polite">
-              {visibleCategories.length} {visibleCategories.length === 1 ? 'category' : 'categories'}
+              {visibleCategories.length} {isGreek ? (visibleCategories.length === 1 ? 'κατηγορία' : 'κατηγορίες') : (visibleCategories.length === 1 ? 'category' : 'categories')}
             </p>
           </div>
         </section>
@@ -316,6 +333,7 @@ export function PricelistPage() {
               key={category.slug}
               category={category}
               imageLoading={index < 4 ? 'eager' : 'lazy'}
+              lang={lang}
             />
           ))}
         </div>

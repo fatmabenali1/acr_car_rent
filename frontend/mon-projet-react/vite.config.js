@@ -56,8 +56,8 @@ function getImageDimensions(filePath) {
 }
 
 function listReviews(root) {
-  return reviewPlatforms.flatMap((platform) => {
-    const directory = path.join(root, 'public', 'images', 'reviews', platform)
+  const reviewsDirectory = path.join(root, 'public', 'images', 'reviews')
+  const listFiles = (directory) => {
     let filenames = []
     try {
       filenames = readdirSync(directory)
@@ -67,7 +67,12 @@ function listReviews(root) {
     } catch (error) {
       if (error.code !== 'ENOENT') throw error
     }
+    return filenames
+  }
 
+  const reviewsByPlatform = reviewPlatforms.flatMap((platform) => {
+    const directory = path.join(reviewsDirectory, platform)
+    const filenames = listFiles(directory)
     return filenames.map((filename, index) => {
       const dimensions = getImageDimensions(path.join(directory, filename))
       const src = `/images/reviews/${platform}/${filename.split(path.sep).map(encodeURIComponent).join('/')}`
@@ -76,11 +81,24 @@ function listReviews(root) {
         id: `${platform}-${filename}`,
         platform,
         src,
-        alt: `Customer review on ${label}, ${index + 1}`,
+        alt: `Customer review of Athens Car Rental ACR on ${label}, ${index + 1}`,
         ...dimensions,
       }
     })
   })
+
+  const rootCaptures = listFiles(reviewsDirectory).map((filename, index) => {
+    const dimensions = getImageDimensions(path.join(reviewsDirectory, filename))
+    return {
+      id: `reviews-center-${filename}`,
+      platform: 'reviews-center',
+      src: `/images/reviews/${filename.split(path.sep).map(encodeURIComponent).join('/')}`,
+      alt: `Customer review of Athens Car Rental ACR, ${index + 1}`,
+      ...dimensions,
+    }
+  })
+
+  return [...rootCaptures, ...reviewsByPlatform]
 }
 
 function listRatingBadges(root) {
@@ -157,6 +175,9 @@ function reviewsDataPlugin() {
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react(), reviewsDataPlugin()],
+  server: {
+    allowedHosts: true,
+  },
   test: {
     environment: 'jsdom',
     setupFiles: './tests/setup.js',

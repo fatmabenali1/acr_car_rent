@@ -89,6 +89,7 @@ const depositConfirmationPayloadSchema: z.ZodType<DepositConfirmationPayload> = 
   returnLocation: z.string().optional(),
   category: z.string().optional(),
   agencyPhones: z.array(z.string()),
+  agencyEmail: z.string().email().optional(),
 });
 const internalDepositPaidPayloadSchema: z.ZodType<InternalDepositPaidPayload> = z.object({
   reference: z.string().min(1).max(64),
@@ -498,13 +499,14 @@ export async function queueDepositPaidEmails(
       ...common,
       customerFirstName: quote.customerFirstName,
       agencyPhones: [env.AGENCY_PHONE, env.AGENCY_SECONDARY_PHONE],
+      agencyEmail: env.AGENCY_EMAIL,
     };
     await transaction.emailOutbox.create({
       data: {
         quoteId,
         recipient: quote.customerEmail,
         template: "deposit_confirmation",
-        language,
+        language: "en",
         payload: payload as Prisma.InputJsonValue,
       },
     });

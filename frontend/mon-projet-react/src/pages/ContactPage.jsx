@@ -1,6 +1,5 @@
 import './ContactPage.css'
 
-const mapEmbedUrl = 'https://www.google.com/maps?q=37.9010973,23.9004058(Athens+Car+Rental+-+ACR)&z=17&output=embed&hl=en'
 const mapSearchUrl = 'https://www.google.com/maps/search/?api=1&query=37.9010973,23.9004058'
 
 export function ContactIcon({ name }) {
@@ -19,12 +18,13 @@ export function ContactIcon({ name }) {
   )
 }
 
-export function ContactHero({ breadcrumb, eyebrow, title, highlight, suffix = '', subtitle }) {
+export function ContactHero({ breadcrumb, eyebrow, title, highlight, suffix = '', subtitle, lang = 'en' }) {
+  const isGreek = lang === 'el'
   return (
     <section className="contact-hero">
       <div className="contact-hero-inner">
         <nav className="contact-breadcrumb" aria-label="Breadcrumb">
-          <a href="/" className="rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FACC15] focus-visible:ring-offset-2 focus-visible:ring-offset-[#111111]">Home</a>
+          <a href="/" className="rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FACC15] focus-visible:ring-offset-2 focus-visible:ring-offset-[#111111]">{isGreek ? 'Αρχική' : 'Home'}</a>
           <span aria-hidden="true">/</span>
           <span aria-current="page">{breadcrumb}</span>
         </nav>
@@ -56,28 +56,30 @@ export function ContactField({ id, label, type = 'text', value, onChange, requir
   )
 }
 
-export function ContactPage() {
+export function ContactPage({ lang = 'en' }) {
+  const isGreek = lang === 'el'
   return (
-    <div className="contact-page">
+    <div className="contact-page" lang={lang}>
       <ContactHero
-        breadcrumb="Contact us"
+        lang={lang}
+        breadcrumb={isGreek ? 'Επικοινωνία' : 'Contact us'}
         eyebrow="ATHENS CAR RENTAL"
-        title="Contact "
-        highlight="us"
-        subtitle="We are here to help you plan your rental in Greece."
+        title={isGreek ? 'Επικοινωνήστε ' : 'Contact '}
+        highlight={isGreek ? 'μαζί μας' : 'us'}
+        subtitle={isGreek ? 'Είμαστε εδώ για να σας βοηθήσουμε να οργανώσετε την ενοικίασή σας στην Ελλάδα.' : 'We are here to help you plan your rental in Greece.'}
       />
 
       <div className="contact-main">
         <div className="contact-grid">
-          <section className="contact-map-card" aria-label="Map showing Athens Car Rental location">
+          <section className="contact-map-card" aria-label={isGreek ? 'Χάρτης της τοποθεσίας της Athens Car Rental' : 'Map showing Athens Car Rental location'}>
             <iframe
-              src={mapEmbedUrl}
+              src={`https://www.google.com/maps?q=37.9010973,23.9004058(Athens+Car+Rental+-+ACR)&z=17&output=embed&hl=${isGreek ? 'el' : 'en'}`}
               width="100%"
               height="100%"
               style={{ border: 0 }}
               loading="lazy"
               referrerPolicy="no-referrer-when-downgrade"
-              title="Athens Car Rental location"
+              title={isGreek ? 'Τοποθεσία Athens Car Rental' : 'Athens Car Rental location'}
             />
             <a
               className="contact-map-link"
@@ -86,14 +88,14 @@ export function ContactPage() {
               rel="noopener noreferrer"
             >
               <ContactIcon name="external" />
-              Open in Google Maps
+              {isGreek ? 'Άνοιγμα στους Χάρτες Google' : 'Open in Google Maps'}
             </a>
           </section>
 
           <section className="contact-information">
             <header className="contact-information-heading">
-              <p className="contact-eyebrow">GET IN TOUCH</p>
-              <h2>Contact information</h2>
+              <p className="contact-eyebrow">{isGreek ? 'ΕΠΙΚΟΙΝΩΝΗΣΤΕ ΜΑΖΙ ΜΑΣ' : 'GET IN TOUCH'}</p>
+              <h2>{isGreek ? 'Στοιχεία επικοινωνίας' : 'Contact information'}</h2>
               <span aria-hidden="true" />
               <p className="contact-company-name">Athens Car Rental - ACR</p>
             </header>
@@ -102,7 +104,7 @@ export function ContactPage() {
               <div className="contact-detail">
                 <span className="contact-detail-icon"><ContactIcon name="address" /></span>
                 <div>
-                  <span className="contact-detail-label">Address</span>
+                  <span className="contact-detail-label">{isGreek ? 'Διεύθυνση' : 'Address'}</span>
                   <a
                     className="contact-detail-value"
                     href={mapSearchUrl}
@@ -117,7 +119,7 @@ export function ContactPage() {
               <div className="contact-detail">
                 <span className="contact-detail-icon"><ContactIcon name="phone" /></span>
                 <div>
-                  <span className="contact-detail-label">Phone</span>
+                  <span className="contact-detail-label">{isGreek ? 'Τηλέφωνο' : 'Phone'}</span>
                   <div className="contact-detail-values">
                     <a className="contact-detail-value" href="tel:+302106022220">+30 210 6022220</a>
                     <a className="contact-detail-value" href="tel:+302106624887">+30 210 6624887</a>
@@ -128,7 +130,7 @@ export function ContactPage() {
               <div className="contact-detail">
                 <span className="contact-detail-icon"><ContactIcon name="email" /></span>
                 <div>
-                  <span className="contact-detail-label">E-mail</span>
+                  <span className="contact-detail-label">{isGreek ? 'Ηλεκτρονικό ταχυδρομείο' : 'E-mail'}</span>
                   <a className="contact-detail-value" href="mailto:info@acr.gr">info@acr.gr</a>
                 </div>
               </div>
@@ -136,8 +138,8 @@ export function ContactPage() {
               <div className="contact-detail">
                 <span className="contact-detail-icon"><ContactIcon name="hours" /></span>
                 <div>
-                  <span className="contact-detail-label">Opening hours</span>
-                  <span className="contact-detail-value">Airport delivery &amp; collection 24/7 by appointment</span>
+                  <span className="contact-detail-label">{isGreek ? 'Ώρες λειτουργίας' : 'Opening hours'}</span>
+                  <span className="contact-detail-value">{isGreek ? 'Παράδοση και παραλαβή στο αεροδρόμιο όλο το 24ωρο, κατόπιν συνεννόησης' : 'Airport delivery &amp; collection 24/7 by appointment'}</span>
                 </div>
               </div>
             </div>
@@ -145,10 +147,10 @@ export function ContactPage() {
             <div className="contact-actions">
               <a className="contact-action contact-action-primary" href="tel:+302106022220">
                 <ContactIcon name="phone" />
-                Call us
+                {isGreek ? 'Καλέστε μας' : 'Call us'}
               </a>
               <a className="contact-action contact-action-secondary" href="/booking">
-                Request a quote
+                {isGreek ? 'Ζητήστε προσφορά' : 'Request a quote'}
               </a>
             </div>
           </section>

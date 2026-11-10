@@ -18,7 +18,8 @@ function TermsIcon({ name }) {
   )
 }
 
-export function RentalConditionsPage() {
+export function RentalConditionsPage({ lang = 'en' }) {
+  const isGreek = lang === 'el'
   const [preview, setPreview] = useState(null)
   const [previewFailed, setPreviewFailed] = useState(false)
   const [previewLoaded, setPreviewLoaded] = useState(false)
@@ -47,20 +48,22 @@ export function RentalConditionsPage() {
       <section className="rental-conditions-hero">
         <div className="rental-conditions-hero-inner">
           <nav className="rental-conditions-breadcrumb" aria-label="Breadcrumb">
-            <a href="/">Home</a>
+            <a href="/">{isGreek ? 'Αρχική' : 'Home'}</a>
             <span aria-hidden="true">/</span>
-            <span aria-current="page">Rental Conditions</span>
+            <span aria-current="page">{isGreek ? 'Όροι ενοικίασης' : 'Rental Conditions'}</span>
           </nav>
           <div className="rental-conditions-hero-copy">
             <p className="rental-conditions-eyebrow">ATHENS CAR RENTAL</p>
-            <h1><span>Rental</span> <strong>Conditions</strong></h1>
-            <p>Everything you need to know about your rental agreement.</p>
+            <h1><span>{isGreek ? 'Όροι' : 'Rental'}</span> <strong>{isGreek ? 'ενοικίασης' : 'Conditions'}</strong></h1>
+            <p>{isGreek ? 'Όλα όσα πρέπει να γνωρίζετε για τη συμφωνία ενοικίασής σας.' : 'Everything you need to know about your rental agreement.'}</p>
           </div>
         </div>
       </section>
 
       <div className="rental-conditions-main">
-        <p className="rental-conditions-intro">Please select your preferred language to preview or download the corresponding Terms and Conditions PDF file.</p>
+        <p className="rental-conditions-intro">{isGreek
+          ? 'Επιλέξτε τη γλώσσα σας για να δείτε σε προεπισκόπηση ή να κατεβάσετε το αντίστοιχο αρχείο PDF με τους όρους και τις προϋποθέσεις.'
+          : 'Please select your preferred language to preview or download the corresponding Terms and Conditions PDF file.'}</p>
 
         <div className="rental-terms-grid">
           {rentalTermsData.map((item) => (
@@ -72,7 +75,7 @@ export function RentalConditionsPage() {
               <div className="rental-terms-card-copy">
                 <h2>{item.title}</h2>
                 {item.subtitle && <p className="rental-terms-subtitle" lang="el">{item.subtitle}</p>}
-                <p className="rental-terms-format">PDF document</p>
+                <p className="rental-terms-format">{isGreek ? 'Έγγραφο PDF' : 'PDF document'}</p>
               </div>
               <div className="rental-terms-actions">
                 <a
@@ -84,7 +87,7 @@ export function RentalConditionsPage() {
                   onClick={() => openPreview(item)}
                 >
                   <TermsIcon name="eye" />
-                  Preview
+                  {isGreek ? 'Προεπισκόπηση' : 'Preview'}
                 </a>
                 <a
                   className="rental-terms-button rental-terms-download"
@@ -95,7 +98,7 @@ export function RentalConditionsPage() {
                   aria-label={`Download ${item.id === 'english' ? 'English' : 'Greek'} terms PDF`}
                 >
                   <TermsIcon name="download" />
-                  Download
+                  {isGreek ? 'Λήψη' : 'Download'}
                 </a>
               </div>
             </article>
@@ -106,14 +109,14 @@ export function RentalConditionsPage() {
           <section className="rental-terms-preview-panel" aria-label={`${preview.lang} terms PDF preview`}>
             <div className="rental-terms-preview-header">
               <h2>{preview.title}</h2>
-              <button type="button" onClick={closePreview} aria-label="Close preview">
+              <button type="button" onClick={closePreview} aria-label={isGreek ? 'Κλείσιμο προεπισκόπησης' : 'Close preview'}>
                 <TermsIcon name="close" />
-                Close preview
+                {isGreek ? 'Κλείσιμο προεπισκόπησης' : 'Close preview'}
               </button>
             </div>
             {previewFailed ? (
               <p className="rental-terms-preview-fallback" role="status">
-                Preview unavailable, <a href={preview.url} target="_blank" rel="noopener noreferrer">open the PDF in a new tab</a>.
+                {isGreek ? 'Η προεπισκόπηση δεν είναι διαθέσιμη, ' : 'Preview unavailable, '}<a href={preview.url} target="_blank" rel="noopener noreferrer">{isGreek ? 'ανοίξτε το PDF σε νέα καρτέλα' : 'open the PDF in a new tab'}</a>.
               </p>
             ) : (
               <>
@@ -125,7 +128,7 @@ export function RentalConditionsPage() {
                   onError={() => setPreviewFailed(true)}
                 />
                 <p className="rental-terms-preview-hint">
-                  If the preview is unavailable, <a href={preview.url} target="_blank" rel="noopener noreferrer">open the PDF in a new tab</a>.
+                  {isGreek ? 'Εάν η προεπισκόπηση δεν είναι διαθέσιμη, ' : 'If the preview is unavailable, '}<a href={preview.url} target="_blank" rel="noopener noreferrer">{isGreek ? 'ανοίξτε το PDF σε νέα καρτέλα' : 'open the PDF in a new tab'}</a>.
                 </p>
               </>
             )}
@@ -135,11 +138,11 @@ export function RentalConditionsPage() {
         <aside className="rental-conditions-help">
           <div className="rental-conditions-help-copy">
             <TermsIcon name="info" />
-            <p>Questions about our rental conditions? Check our FAQ or contact us.</p>
+            <p>{isGreek ? 'Έχετε ερωτήσεις σχετικά με τους όρους ενοικίασης; Δείτε τις συχνές ερωτήσεις ή επικοινωνήστε μαζί μας.' : 'Questions about our rental conditions? Check our FAQ or contact us.'}</p>
           </div>
           <div className="rental-conditions-help-actions">
-            <a href="/faq">Read the FAQ</a>
-            <a href="/contact">Contact us</a>
+            <a href="/faq">{isGreek ? 'Δείτε τις συχνές ερωτήσεις' : 'Read the FAQ'}</a>
+            <a href="/contact">{isGreek ? 'Επικοινωνήστε μαζί μας' : 'Contact us'}</a>
           </div>
         </aside>
       </div>

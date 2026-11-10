@@ -43,7 +43,7 @@ Use Stripe test card `4242 4242 4242 4242` with any future expiry and CVC for a 
 - Submit a quote request to create a reference. Agency staff set the total and deposit; the deposit must be at least EUR 50 and cannot exceed the total.
 - Open `/pay?ref=<reference>` (or use Secure payment in the navigation), then verify the reservation with its email address.
 - Checkout creates a 30-minute Stripe-hosted session. Only a signed webhook can mark a reservation paid. The success page reads status from the database while the webhook is processed.
-- The webhook records each Stripe event once. Paid events queue customer and agency email notifications in the existing retryable email outbox.
+- The webhook records each Stripe event once. Paid events queue customer and agency email notifications in the existing retryable email outbox. The customer confirmation is in English and includes payment details plus ACR phone and email contacts.
 - Location suggestions come from `GET /api/locations`; the API exposes only Athens International Airport “Eleftherios Venizelos”, Koropi Metro Station, and Piraeus Port. Custom addresses are stored as unconfirmed addresses, with no delivery fee inferred.
 
 ## Production

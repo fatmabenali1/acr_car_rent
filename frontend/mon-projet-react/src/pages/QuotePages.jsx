@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react'
 import { categories } from '../data/categories'
 import './QuotePages.css'
 
-const PRICED_CATEGORY_CODES = new Set(['D1', 'E', 'E1', 'E2', 'E3', 'D3', 'G', 'G1', 'G2', 'F'])
+const PRICED_CATEGORY_CODES = new Set(['D', 'D1', 'E', 'E1', 'E2', 'E3', 'D3', 'F', 'F2', 'G', 'G1', 'G2'])
 const DEMO_PRICES = import.meta.env.VITE_PRICING_CONFIRMED !== 'true'
 
 function localDate(daysFromToday) {
@@ -42,12 +42,12 @@ function combineDateTime(date, time) {
   return date && time ? `${date}T${time}` : ''
 }
 
-function formatDate(date, time) {
+function formatDate(date, time, lang = 'en') {
   const value = combineDateTime(date, time)
   if (!value) return '—'
   const parsed = new Date(value)
   if (Number.isNaN(parsed.getTime())) return '—'
-  return new Intl.DateTimeFormat('en', {
+  return new Intl.DateTimeFormat(lang === 'el' ? 'el-GR' : 'en', {
     dateStyle: 'medium',
     timeStyle: 'short',
   }).format(parsed)
@@ -168,25 +168,26 @@ function getCategoryMinimumAge(vehicle, category) {
   return ['D1', 'E', 'E1', 'E2', 'E3', 'D3', 'G', 'G1', 'G2', 'F'].includes(code) ? 23 : 25
 }
 
-function ageMessage(value, minimumAge) {
+function ageMessage(value, minimumAge, lang = 'en') {
   if (value === '') return ''
   const age = Number(value)
-  if (!Number.isInteger(age)) return 'Enter a valid age.'
-  if (age < 23) return 'The minimum age is 23 years'
-  if (age > 75) return 'For drivers over 75, please contact us by email before booking.'
-  if (age < minimumAge) return `The minimum age for this category is ${minimumAge} years.`
+  if (!Number.isInteger(age)) return lang === 'el' ? 'Εισαγάγετε έγκυρη ηλικία.' : 'Enter a valid age.'
+  if (age < 23) return lang === 'el' ? 'Η ελάχιστη ηλικία είναι 23 έτη.' : 'The minimum age is 23 years'
+  if (age > 75) return lang === 'el' ? 'Για οδηγούς άνω των 75 ετών, επικοινωνήστε μαζί μας μέσω email πριν από την κράτηση.' : 'For drivers over 75, please contact us by email before booking.'
+  if (age < minimumAge) return lang === 'el' ? `Η ελάχιστη ηλικία για αυτή την κατηγορία είναι ${minimumAge} έτη.` : `The minimum age for this category is ${minimumAge} years.`
   return ''
 }
 
-function estimateValue(estimate) {
+function estimateValue(estimate, lang = 'en') {
   const total = estimate?.totalEur ?? estimate?.total
   if (total === undefined || total === null || total === '') return '—'
   return typeof total === 'number'
-    ? new Intl.NumberFormat('en', { style: 'currency', currency: 'EUR' }).format(total)
+    ? new Intl.NumberFormat(lang === 'el' ? 'el-GR' : 'en', { style: 'currency', currency: 'EUR' }).format(total)
     : total
 }
 
 export function QuotePages({ locations = [], vehicles = [], lang = 'en', loading, error, api, onReservationCreated }) {
+  const isGreek = lang === 'el'
   const [reservation, setReservation] = useState(getInitialReservation)
   const [customer, setCustomer] = useState({
     firstName: '',
@@ -227,7 +228,7 @@ export function QuotePages({ locations = [], vehicles = [], lang = 'en', loading
   const selectedName = selectedVehicleData?.name || categoryData?.name || ''
   const selectedModels = selectedVehicleData?.example || categoryData?.example || ''
   const selectedImage = categoryData?.image || selectedVehicleData?.image
-  const driverAgeError = ageMessage(reservation.driverAge, minimumDriverAge)
+  const driverAgeError = ageMessage(reservation.driverAge, minimumDriverAge, lang)
   const afterHours = [reservation.pickupTime, reservation.returnTime].some(
     (time) => time && (time >= '23:00' || time < '07:00'),
   )
@@ -251,37 +252,37 @@ export function QuotePages({ locations = [], vehicles = [], lang = 'en', loading
     const returnAt = combineDateTime(reservation.returnDate, reservation.returnTime)
 
     if (!vehicleOptions.some((vehicle) => vehicle.slug === selectedVehicle)) {
-      nextErrors.category = 'Select a vehicle category.'
+      nextErrors.category = isGreek ? 'Επιλέξτε κατηγορία οχήματος.' : 'Select a vehicle category.'
     }
-    if (!reservation.pickupLocation.trim()) nextErrors.pickupLocation = 'Enter a pick-up location.'
+    if (!reservation.pickupLocation.trim()) nextErrors.pickupLocation = isGreek ? 'Εισαγάγετε τοποθεσία παραλαβής.' : 'Enter a pick-up location.'
     if (reservation.useDifferentDropoff && !reservation.dropoffLocation.trim()) {
-      nextErrors.dropoffLocation = 'Enter a drop-off location.'
+      nextErrors.dropoffLocation = isGreek ? 'Εισαγάγετε τοποθεσία επιστροφής.' : 'Enter a drop-off location.'
     }
-    if (!reservation.pickupDate) nextErrors.pickupDate = 'Choose a pick-up date.'
-    if (!reservation.pickupTime) nextErrors.pickupTime = 'Choose a pick-up time.'
-    if (!reservation.returnDate) nextErrors.returnDate = 'Choose a drop-off date.'
-    if (!reservation.returnTime) nextErrors.returnTime = 'Choose a drop-off time.'
+    if (!reservation.pickupDate) nextErrors.pickupDate = isGreek ? 'Επιλέξτε ημερομηνία παραλαβής.' : 'Choose a pick-up date.'
+    if (!reservation.pickupTime) nextErrors.pickupTime = isGreek ? 'Επιλέξτε ώρα παραλαβής.' : 'Choose a pick-up time.'
+    if (!reservation.returnDate) nextErrors.returnDate = isGreek ? 'Επιλέξτε ημερομηνία επιστροφής.' : 'Choose a drop-off date.'
+    if (!reservation.returnTime) nextErrors.returnTime = isGreek ? 'Επιλέξτε ώρα επιστροφής.' : 'Choose a drop-off time.'
     if (pickupAt && returnAt && returnAt <= pickupAt) {
-      nextErrors.returnDate = 'Drop-off must be after pick-up.'
+      nextErrors.returnDate = isGreek ? 'Η επιστροφή πρέπει να είναι μετά την παραλαβή.' : 'Drop-off must be after pick-up.'
     }
-    if (!reservation.driverAge) nextErrors.driverAge = 'Enter the driver age.'
+    if (!reservation.driverAge) nextErrors.driverAge = isGreek ? 'Εισαγάγετε την ηλικία του οδηγού.' : 'Enter the driver age.'
     else if (driverAgeError) nextErrors.driverAge = driverAgeError
     if (!reservation.driverLicenceYears
       || !Number.isInteger(Number(reservation.driverLicenceYears))
       || Number(reservation.driverLicenceYears) < 1) {
-      nextErrors.driverLicenceYears = 'Enter the years holding your driving licence.'
+      nextErrors.driverLicenceYears = isGreek ? 'Εισαγάγετε τα έτη κατοχής της άδειας οδήγησης.' : 'Enter the years holding your driving licence.'
     }
 
     if (includeCustomer) {
-      if (!customer.firstName.trim()) nextErrors.firstName = 'Enter your first name.'
-      if (!customer.lastName.trim()) nextErrors.lastName = 'Enter your last name.'
-      if (!customer.email.trim()) nextErrors.email = 'Enter your email.'
+      if (!customer.firstName.trim()) nextErrors.firstName = isGreek ? 'Εισαγάγετε το όνομά σας.' : 'Enter your first name.'
+      if (!customer.lastName.trim()) nextErrors.lastName = isGreek ? 'Εισαγάγετε το επώνυμό σας.' : 'Enter your last name.'
+      if (!customer.email.trim()) nextErrors.email = isGreek ? 'Εισαγάγετε το email σας.' : 'Enter your email.'
       else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(customer.email)) {
-        nextErrors.email = 'Enter a valid email address.'
+        nextErrors.email = isGreek ? 'Εισαγάγετε έγκυρη διεύθυνση email.' : 'Enter a valid email address.'
       }
-      if (!customer.phone.trim()) nextErrors.phone = 'Enter your phone number.'
-      if (!customer.country.trim()) nextErrors.country = 'Enter your country.'
-      if (!privacyAccepted) nextErrors.privacyAccepted = 'Please accept personal data processing.'
+      if (!customer.phone.trim()) nextErrors.phone = isGreek ? 'Εισαγάγετε τον αριθμό τηλεφώνου σας.' : 'Enter your phone number.'
+      if (!customer.country.trim()) nextErrors.country = isGreek ? 'Εισαγάγετε τη χώρα σας.' : 'Enter your country.'
+      if (!privacyAccepted) nextErrors.privacyAccepted = isGreek ? 'Αποδεχτείτε την επεξεργασία των προσωπικών σας δεδομένων.' : 'Please accept personal data processing.'
     }
     return nextErrors
   }
@@ -313,9 +314,9 @@ export function QuotePages({ locations = [], vehicles = [], lang = 'en', loading
         extras: [],
       }, lang)
       setEstimate(result.data || null)
-      setStatusMessage('Estimate received.')
+      setStatusMessage(isGreek ? 'Η εκτίμηση είναι έτοιμη.' : 'Estimate received.')
     } catch (requestError) {
-      setStatusMessage(requestError.message || 'Unable to estimate price. Please try again.')
+      setStatusMessage(requestError.message || (isGreek ? 'Δεν ήταν δυνατή η εκτίμηση της τιμής. Δοκιμάστε ξανά.' : 'Unable to estimate price. Please try again.'))
     } finally {
       setEstimating(false)
     }
@@ -351,7 +352,7 @@ export function QuotePages({ locations = [], vehicles = [], lang = 'en', loading
         website,
       })
       if (!result?.reservationNumber) {
-        setStatusMessage('Your quote request could not be confirmed. Please try again.')
+        setStatusMessage(isGreek ? 'Δεν ήταν δυνατή η επιβεβαίωση του αιτήματος προσφοράς. Δοκιμάστε ξανά.' : 'Your quote request could not be confirmed. Please try again.')
         return
       }
       setCreatedReference(result.reservationNumber)
@@ -380,63 +381,63 @@ export function QuotePages({ locations = [], vehicles = [], lang = 'en', loading
       if (Object.keys(fieldErrors).length) {
         setFormErrors((current) => ({ ...current, ...fieldErrors }))
       }
-      setStatusMessage(requestError.message || 'Could not create the booking request. Please try again.')
+      setStatusMessage(requestError.message || (isGreek ? 'Δεν ήταν δυνατή η δημιουργία του αιτήματος κράτησης. Δοκιμάστε ξανά.' : 'Could not create the booking request. Please try again.'))
     } finally {
       setSubmitting(false)
     }
   }
 
-  const pageTitle = 'Request a quote'
+  const pageTitle = isGreek ? 'Ζητήστε προσφορά' : 'Request a quote'
 
   return (
     <div className="quote-page">
       <section className="quote-hero">
         <div className="quote-hero__inner">
           <nav className="quote-breadcrumb" aria-label="Breadcrumb">
-            <a href="/">Home</a>
+            <a href="/">{isGreek ? 'Αρχική' : 'Home'}</a>
             <span aria-hidden="true">/</span>
             <span aria-current="page">{pageTitle}</span>
           </nav>
           <div className="quote-hero__copy">
             <p className="quote-eyebrow">ATHENS CAR RENTAL</p>
-            <h1>Request a <span>quote</span></h1>
-            <p className="quote-hero__subtitle">Tell us about your trip and get your rate in minutes.</p>
+            <h1>{isGreek ? 'Ζητήστε ' : 'Request a '}<span>{isGreek ? 'προσφορά' : 'quote'}</span></h1>
+            <p className="quote-hero__subtitle">{isGreek ? 'Πείτε μας για το ταξίδι σας και λάβετε τιμή σε λίγα λεπτά.' : 'Tell us about your trip and get your rate in minutes.'}</p>
           </div>
-          <ol className="quote-steps" aria-label="Quote steps">
-            <li className="is-current" aria-current="step"><span>1</span> Trip</li>
-            <li><span>2</span> Vehicle</li>
-            <li><span>3</span> Your details</li>
+          <ol className="quote-steps" aria-label={isGreek ? 'Βήματα προσφοράς' : 'Quote steps'}>
+            <li className="is-current" aria-current="step"><span>1</span> {isGreek ? 'Ταξίδι' : 'Trip'}</li>
+            <li><span>2</span> {isGreek ? 'Όχημα' : 'Vehicle'}</li>
+            <li><span>3</span> {isGreek ? 'Τα στοιχεία σας' : 'Your details'}</li>
           </ol>
         </div>
       </section>
 
       <main className="quote-main">
-        {loading && <div className="quote-state" role="status">Loading quote form…</div>}
+        {loading && <div className="quote-state" role="status">{isGreek ? 'Φόρτωση φόρμας προσφοράς…' : 'Loading quote form…'}</div>}
         {error && !loading && <div className="quote-state quote-state--error" role="alert">{error}</div>}
 
         {!loading && !error && confirmed ? (
           <section className="quote-confirmation" aria-labelledby="quote-confirmation-title">
             <span className="quote-confirmation__icon"><QuoteIcon name="check" size={30} /></span>
-            <h2 id="quote-confirmation-title">Thank you, {customer.firstName}!</h2>
-            <p className="quote-confirmation__intro">We will contact you shortly by email.</p>
+            <h2 id="quote-confirmation-title">{isGreek ? `Ευχαριστούμε, ${customer.firstName}!` : `Thank you, ${customer.firstName}!`}</h2>
+            <p className="quote-confirmation__intro">{isGreek ? 'Θα επικοινωνήσουμε σύντομα μαζί σας μέσω email.' : 'We will contact you shortly by email.'}</p>
             {statusMessage && <p className="quote-status" role="alert">{statusMessage}</p>}
             <dl className="quote-confirmation__details">
-              <div><dt>Vehicle category</dt><dd>{selectedName || '—'}</dd></div>
-              <div><dt>Pick-up</dt><dd>{reservation.pickupLocation || '—'} · {formatDate(reservation.pickupDate, reservation.pickupTime)}</dd></div>
-              <div><dt>Drop-off</dt><dd>{dropoffLocation || '—'} · {formatDate(reservation.returnDate, reservation.returnTime)}</dd></div>
-              {createdReference && <div><dt>Reference</dt><dd>{createdReference}</dd></div>}
-              {estimate?.totalEur !== undefined && <div><dt>Estimated total</dt><dd>€{estimate.totalEur}</dd></div>}
-              {createdDeposit !== null && <div><dt>Deposit due</dt><dd>€{createdDeposit}</dd></div>}
+              <div><dt>{isGreek ? 'Κατηγορία οχήματος' : 'Vehicle category'}</dt><dd>{selectedName || '—'}</dd></div>
+              <div><dt>{isGreek ? 'Παραλαβή' : 'Pick-up'}</dt><dd>{reservation.pickupLocation || '—'} · {formatDate(reservation.pickupDate, reservation.pickupTime, lang)}</dd></div>
+              <div><dt>{isGreek ? 'Επιστροφή' : 'Drop-off'}</dt><dd>{dropoffLocation || '—'} · {formatDate(reservation.returnDate, reservation.returnTime, lang)}</dd></div>
+              {createdReference && <div><dt>{isGreek ? 'Κωδικός αναφοράς' : 'Reference'}</dt><dd>{createdReference}</dd></div>}
+              {estimate?.totalEur !== undefined && <div><dt>{isGreek ? 'Εκτιμώμενο σύνολο' : 'Estimated total'}</dt><dd>€{estimate.totalEur}</dd></div>}
+              {createdDeposit !== null && <div><dt>{isGreek ? 'Προκαταβολή' : 'Deposit due'}</dt><dd>€{createdDeposit}</dd></div>}
             </dl>
             {createdReference && (
               <a className="quote-confirmation__payment" href={`/pay?ref=${encodeURIComponent(createdReference)}`}>
-                Continue to secure payment <QuoteIcon name="arrow" size={18} />
+                {isGreek ? 'Συνέχεια στην ασφαλή πληρωμή' : 'Continue to secure payment'} <QuoteIcon name="arrow" size={18} />
               </a>
             )}
             <div className="quote-confirmation__actions">
-              <a className="quote-button quote-button--primary" href="/">Back to Home</a>
+              <a className="quote-button quote-button--primary" href="/">{isGreek ? 'Επιστροφή στην αρχική' : 'Back to Home'}</a>
               <a className="quote-button quote-button--outline" href="tel:+302106022220">
-                <QuoteIcon name="phone" size={18} /> Call us
+                <QuoteIcon name="phone" size={18} /> {isGreek ? 'Καλέστε μας' : 'Call us'}
               </a>
             </div>
           </section>
@@ -444,9 +445,9 @@ export function QuotePages({ locations = [], vehicles = [], lang = 'en', loading
           <div className="quote-layout">
             <form id="quote-request-form" className="quote-form" onSubmit={onSubmit} noValidate>
               <section className="quote-card" aria-labelledby="quote-trip-title">
-                <SectionHeading icon="map" id="quote-trip-title" number="01" title="Your trip" />
+                <SectionHeading icon="map" id="quote-trip-title" number="01" title={isGreek ? 'Το ταξίδι σας' : 'Your trip'} />
                 <div className="quote-fields">
-                  <FormField id="booking-category" label="Vehicle category" error={formErrors.category}>
+                  <FormField id="booking-category" label={isGreek ? 'Κατηγορία οχήματος' : 'Vehicle category'} error={formErrors.category}>
                     <select
                       id="booking-category"
                       name="category"
@@ -458,13 +459,13 @@ export function QuotePages({ locations = [], vehicles = [], lang = 'en', loading
                         setFormErrors((current) => ({ ...current, category: '' }))
                       }}
                     >
-                      <option value="">Select category</option>
+                      <option value="">{isGreek ? 'Επιλέξτε κατηγορία' : 'Select category'}</option>
                       {vehicleOptions.map((vehicle) => (
                         <option key={vehicle.id || vehicle.slug} value={vehicle.slug}>{vehicle.name || vehicle.slug}</option>
                       ))}
                     </select>
                   </FormField>
-                  <FormField id="booking-pickup-location" label="Pick-up location" error={formErrors.pickupLocation}>
+                  <FormField id="booking-pickup-location" label={isGreek ? 'Τοποθεσία παραλαβής' : 'Pick-up location'} error={formErrors.pickupLocation}>
                     <input
                       id="booking-pickup-location"
                       name="pickupLocation"
@@ -483,10 +484,10 @@ export function QuotePages({ locations = [], vehicles = [], lang = 'en', loading
                       checked={sameLocation}
                       onChange={(event) => updateReservation('useDifferentDropoff', !event.target.checked)}
                     />
-                    <span>Return to the same location</span>
+                    <span>{isGreek ? 'Επιστροφή στην ίδια τοποθεσία' : 'Return to the same location'}</span>
                   </label>
                   {!sameLocation && (
-                    <FormField id="booking-dropoff-location" label="Drop-off location" error={formErrors.dropoffLocation}>
+                    <FormField id="booking-dropoff-location" label={isGreek ? 'Τοποθεσία επιστροφής' : 'Drop-off location'} error={formErrors.dropoffLocation}>
                       <input
                         id="booking-dropoff-location"
                         name="returnLocation"
@@ -501,7 +502,7 @@ export function QuotePages({ locations = [], vehicles = [], lang = 'en', loading
                   <datalist id="quote-locations">
                     {locationOptions.map((location) => <option key={location} value={location} />)}
                   </datalist>
-                  <FormField id="booking-pickup-date" label="Pick-up date" error={formErrors.pickupDate}>
+                  <FormField id="booking-pickup-date" label={isGreek ? 'Ημερομηνία παραλαβής' : 'Pick-up date'} error={formErrors.pickupDate}>
                     <input
                       id="booking-pickup-date"
                       name="pickupDate"
@@ -511,7 +512,7 @@ export function QuotePages({ locations = [], vehicles = [], lang = 'en', loading
                       onChange={(event) => updateReservation('pickupDate', event.target.value)}
                     />
                   </FormField>
-                  <FormField id="booking-pickup-time" label="Pick-up time" error={formErrors.pickupTime}>
+                  <FormField id="booking-pickup-time" label={isGreek ? 'Ώρα παραλαβής' : 'Pick-up time'} error={formErrors.pickupTime}>
                     <input
                       id="booking-pickup-time"
                       name="pickupTime"
@@ -521,7 +522,7 @@ export function QuotePages({ locations = [], vehicles = [], lang = 'en', loading
                       onChange={(event) => updateReservation('pickupTime', event.target.value)}
                     />
                   </FormField>
-                  <FormField id="booking-return-date" label="Drop-off date" error={formErrors.returnDate}>
+                  <FormField id="booking-return-date" label={isGreek ? 'Ημερομηνία επιστροφής' : 'Drop-off date'} error={formErrors.returnDate}>
                     <input
                       id="booking-return-date"
                       name="returnDate"
@@ -531,7 +532,7 @@ export function QuotePages({ locations = [], vehicles = [], lang = 'en', loading
                       onChange={(event) => updateReservation('returnDate', event.target.value)}
                     />
                   </FormField>
-                  <FormField id="booking-return-time" label="Drop-off time" error={formErrors.returnTime}>
+                  <FormField id="booking-return-time" label={isGreek ? 'Ώρα επιστροφής' : 'Drop-off time'} error={formErrors.returnTime}>
                     <input
                       id="booking-return-time"
                       name="returnTime"
@@ -543,15 +544,15 @@ export function QuotePages({ locations = [], vehicles = [], lang = 'en', loading
                   </FormField>
                 </div>
                 {afterHours && (
-                  <p className="quote-after-hours">A small after-hours fee applies between 23:00 and 07:00.</p>
+                  <p className="quote-after-hours">{isGreek ? 'Ισχύει μικρή επιβάρυνση εκτός ωραρίου από τις 23:00 έως τις 07:00.' : 'A small after-hours fee applies between 23:00 and 07:00.'}</p>
                 )}
-                {days && <p className="quote-days">{days} {days === 1 ? 'day' : 'days'}</p>}
+                {days && <p className="quote-days">{days} {isGreek ? 'ημέρες' : days === 1 ? 'day' : 'days'}</p>}
               </section>
 
               <section className="quote-card" aria-labelledby="quote-driver-title">
-                <SectionHeading icon="user" id="quote-driver-title" number="02" title="Driver" />
+                <SectionHeading icon="user" id="quote-driver-title" number="02" title={isGreek ? 'Οδηγός' : 'Driver'} />
                 <div className="quote-fields">
-                  <FormField id="booking-driver-age" label="Driver age" error={formErrors.driverAge || driverAgeError}>
+                  <FormField id="booking-driver-age" label={isGreek ? 'Ηλικία οδηγού' : 'Driver age'} error={formErrors.driverAge || driverAgeError}>
                     <input
                       id="booking-driver-age"
                       name="driverAge"
@@ -563,7 +564,7 @@ export function QuotePages({ locations = [], vehicles = [], lang = 'en', loading
                       onChange={(event) => updateReservation('driverAge', event.target.value)}
                     />
                   </FormField>
-                  <FormField id="booking-driver-licence-years" label="Years holding driving licence" error={formErrors.driverLicenceYears}>
+                  <FormField id="booking-driver-licence-years" label={isGreek ? 'Έτη κατοχής άδειας οδήγησης' : 'Years holding driving licence'} error={formErrors.driverLicenceYears}>
                     <input
                       id="booking-driver-licence-years"
                       name="driverLicenceYears"
@@ -579,24 +580,24 @@ export function QuotePages({ locations = [], vehicles = [], lang = 'en', loading
               </section>
 
               <section className="quote-card" aria-labelledby="quote-details-title">
-                <SectionHeading icon="user" id="quote-details-title" number="03" title="Your details" />
+                <SectionHeading icon="user" id="quote-details-title" number="03" title={isGreek ? 'Τα στοιχεία σας' : 'Your details'} />
                 <div className="quote-fields">
-                  <FormField id="quote-first-name" label="First name" error={formErrors.firstName}>
+                  <FormField id="quote-first-name" label={isGreek ? 'Όνομα' : 'First name'} error={formErrors.firstName}>
                     <input id="quote-first-name" name="firstName" autoComplete="given-name" required value={customer.firstName} onChange={(event) => updateCustomer('firstName', event.target.value)} />
                   </FormField>
-                  <FormField id="quote-last-name" label="Last name" error={formErrors.lastName}>
+                  <FormField id="quote-last-name" label={isGreek ? 'Επώνυμο' : 'Last name'} error={formErrors.lastName}>
                     <input id="quote-last-name" name="lastName" autoComplete="family-name" required value={customer.lastName} onChange={(event) => updateCustomer('lastName', event.target.value)} />
                   </FormField>
                   <FormField id="quote-email" label="Email" error={formErrors.email}>
                     <input id="quote-email" name="email" type="email" autoComplete="email" required value={customer.email} onChange={(event) => updateCustomer('email', event.target.value)} />
                   </FormField>
-                  <FormField id="quote-phone" label="Phone" error={formErrors.phone}>
+                  <FormField id="quote-phone" label={isGreek ? 'Τηλέφωνο' : 'Phone'} error={formErrors.phone}>
                     <input id="quote-phone" name="phone" type="tel" autoComplete="tel" required value={customer.phone} onChange={(event) => updateCustomer('phone', event.target.value)} />
                   </FormField>
-                  <FormField id="quote-country" label="Country" error={formErrors.country}>
+                  <FormField id="quote-country" label={isGreek ? 'Χώρα' : 'Country'} error={formErrors.country}>
                     <input id="quote-country" name="country" autoComplete="country-name" required value={customer.country} onChange={(event) => updateCustomer('country', event.target.value)} />
                   </FormField>
-                  <FormField id="quote-notes" label="Notes">
+                  <FormField id="quote-notes" label={isGreek ? 'Σημειώσεις' : 'Notes'}>
                     <textarea id="quote-notes" name="notes" rows="3" value={reservation.notes} onChange={(event) => updateReservation('notes', event.target.value)} />
                   </FormField>
                 </div>
@@ -608,11 +609,11 @@ export function QuotePages({ locations = [], vehicles = [], lang = 'en', loading
                     onClick={() => setCouponOpen((open) => !open)}
                   >
                     <QuoteIcon name="tag" size={17} />
-                    Have a coupon?
+                    {isGreek ? 'Έχετε κουπόνι;' : 'Have a coupon?'}
                   </button>
                   {couponOpen && (
                     <div className="quote-coupon__field">
-                      <FormField id="booking-coupon" label="Coupon">
+                      <FormField id="booking-coupon" label={isGreek ? 'Κουπόνι' : 'Coupon'}>
                         <input id="booking-coupon" name="coupon" value={reservation.coupon} onChange={(event) => updateReservation('coupon', event.target.value)} />
                       </FormField>
                     </div>
@@ -622,20 +623,20 @@ export function QuotePages({ locations = [], vehicles = [], lang = 'en', loading
 
               <div className="quote-actions">
                 <div className="quote-actions__estimate">
-                  <span>Estimated total</span>
-                  <strong>{estimateValue(estimate)}</strong>
+                  <span>{isGreek ? 'Εκτιμώμενο σύνολο' : 'Estimated total'}</span>
+                  <strong>{estimateValue(estimate, lang)}</strong>
                 </div>
                 <div className="quote-actions__buttons">
                   <button className="quote-button quote-button--outline" type="button" onClick={onEstimate} disabled={estimating || !hasValidEstimateDetails}>
                     {estimating ? <span className="quote-spinner" aria-hidden="true" /> : null}
-                    {estimating ? 'Estimating…' : 'Estimate'}
+                    {estimating ? isGreek ? 'Υπολογισμός…' : 'Estimating…' : isGreek ? 'Υπολογισμός' : 'Estimate'}
                   </button>
                   <button className="quote-button quote-button--primary" type="submit" disabled={submitting || !hasValidQuoteDetails}>
                     {submitting ? <span className="quote-spinner" aria-hidden="true" /> : <QuoteIcon name="send" size={18} />}
-                    {submitting ? 'Submitting…' : 'Submit quote'}
+                    {submitting ? isGreek ? 'Υποβολή…' : 'Submitting…' : isGreek ? 'Υποβολή αιτήματος' : 'Submit quote'}
                   </button>
                 </div>
-                <p className="quote-actions__note">Submit your request to continue to secure deposit payment.</p>
+                <p className="quote-actions__note">{isGreek ? 'Υποβάλετε το αίτημά σας για να συνεχίσετε στην ασφαλή πληρωμή της προκαταβολής.' : 'Submit your request to continue to secure deposit payment.'}</p>
               </div>
               {statusMessage && <p className="quote-status" role="status" aria-live="polite">{statusMessage}</p>}
               <label className="quote-privacy-consent">
@@ -651,7 +652,7 @@ export function QuotePages({ locations = [], vehicles = [], lang = 'en', loading
                     setFormErrors((current) => ({ ...current, privacyAccepted: '' }))
                   }}
                 />
-                <span>I accept the processing of my personal data for this reservation request. See our <a href="/privacy-policy">privacy policy</a>.</span>
+                <span>{isGreek ? 'Αποδέχομαι την επεξεργασία των προσωπικών μου δεδομένων για αυτό το αίτημα κράτησης. Δείτε την ' : 'I accept the processing of my personal data for this reservation request. See our '}<a href="/privacy-policy">{isGreek ? 'πολιτική απορρήτου' : 'privacy policy'}</a>.</span>
               </label>
               {formErrors.privacyAccepted && <p className="quote-field__error" id="quote-privacy-consent-error">{formErrors.privacyAccepted}</p>}
               <input
@@ -666,8 +667,8 @@ export function QuotePages({ locations = [], vehicles = [], lang = 'en', loading
             </form>
 
             <aside className="quote-summary" aria-labelledby="quote-summary-title">
-              <h2 id="quote-summary-title">Your rental</h2>
-              {DEMO_PRICES && <p className="quote-demo-prices">Demo prices</p>}
+              <h2 id="quote-summary-title">{isGreek ? 'Η ενοικίασή σας' : 'Your rental'}</h2>
+              {DEMO_PRICES && <p className="quote-demo-prices">{isGreek ? 'Ενδεικτικές τιμές' : 'Demo prices'}</p>}
               <div className="quote-summary__vehicle">
                 {selectedVehicle ? (
                   selectedImage
@@ -677,30 +678,30 @@ export function QuotePages({ locations = [], vehicles = [], lang = 'en', loading
                   <span className="quote-summary__vehicle-placeholder"><QuoteIcon name="car" size={30} /></span>
                 )}
                 <div>
-                  <strong>{selectedName || 'Select category'}</strong>
-                  <span>{selectedModels || 'Vehicle models will appear here'}</span>
+                  <strong>{selectedName || (isGreek ? 'Επιλέξτε κατηγορία' : 'Select category')}</strong>
+                  <span>{selectedModels || (isGreek ? 'Τα μοντέλα οχημάτων θα εμφανιστούν εδώ' : 'Vehicle models will appear here')}</span>
                 </div>
               </div>
               <dl className="quote-summary__trip">
-                <div><dt>Pick-up</dt><dd>{reservation.pickupLocation || '—'}</dd></div>
-                <div><dt>Drop-off</dt><dd>{dropoffLocation || '—'}</dd></div>
-                <div><dt>Pick-up date</dt><dd>{formatDate(reservation.pickupDate, reservation.pickupTime)}</dd></div>
-                <div><dt>Drop-off date</dt><dd>{formatDate(reservation.returnDate, reservation.returnTime)}</dd></div>
-                <div><dt>Rental length</dt><dd>{days ? `${days} ${days === 1 ? 'day' : 'days'}` : '—'}</dd></div>
+                <div><dt>{isGreek ? 'Παραλαβή' : 'Pick-up'}</dt><dd>{reservation.pickupLocation || '—'}</dd></div>
+                <div><dt>{isGreek ? 'Επιστροφή' : 'Drop-off'}</dt><dd>{dropoffLocation || '—'}</dd></div>
+                <div><dt>{isGreek ? 'Ημερομηνία παραλαβής' : 'Pick-up date'}</dt><dd>{formatDate(reservation.pickupDate, reservation.pickupTime, lang)}</dd></div>
+                <div><dt>{isGreek ? 'Ημερομηνία επιστροφής' : 'Drop-off date'}</dt><dd>{formatDate(reservation.returnDate, reservation.returnTime, lang)}</dd></div>
+                <div><dt>{isGreek ? 'Διάρκεια ενοικίασης' : 'Rental length'}</dt><dd>{days ? `${days} ${isGreek ? 'ημέρες' : days === 1 ? 'day' : 'days'}` : '—'}</dd></div>
               </dl>
               <div className="quote-summary__total">
-                <span>Estimated total</span>
-                <strong>{estimateValue(estimate)}</strong>
+                <span>{isGreek ? 'Εκτιμώμενο σύνολο' : 'Estimated total'}</span>
+                <strong>{estimateValue(estimate, lang)}</strong>
               </div>
               <div className="quote-summary__included">
-                <h3>Included in your rate</h3>
+                <h3>{isGreek ? 'Περιλαμβάνονται στην τιμή' : 'Included in your rate'}</h3>
                 <ul>
                   {[
-                    'Civil liability insurance',
+                    isGreek ? 'Ασφάλιση αστικής ευθύνης' : 'Civil liability insurance',
                     'C.D.W.',
-                    'Theft and fire insurance',
-                    'Free additional drivers',
-                    '24-hour road assistance',
+                    isGreek ? 'Ασφάλιση κλοπής και πυρκαγιάς' : 'Theft and fire insurance',
+                    isGreek ? 'Δωρεάν πρόσθετοι οδηγοί' : 'Free additional drivers',
+                    isGreek ? 'Οδική βοήθεια 24 ωρών' : '24-hour road assistance',
                   ].map((item) => (
                     <li key={item}><QuoteIcon name="check" size={17} />{item}</li>
                   ))}
@@ -713,16 +714,16 @@ export function QuotePages({ locations = [], vehicles = [], lang = 'en', loading
       {!loading && !error && !confirmed && (
         <div className="quote-mobile-actions">
           <div className="quote-mobile-actions__total">
-            <span>Estimated total</span>
-            <strong>{estimateValue(estimate)}</strong>
+            <span>{isGreek ? 'Εκτιμώμενο σύνολο' : 'Estimated total'}</span>
+            <strong>{estimateValue(estimate, lang)}</strong>
           </div>
           <button type="button" className="quote-button quote-button--outline" onClick={onEstimate} disabled={estimating || !hasValidEstimateDetails}>
             {estimating ? <span className="quote-spinner" aria-hidden="true" /> : null}
-            Estimate
+            {isGreek ? 'Υπολογισμός' : 'Estimate'}
           </button>
           <button type="submit" form="quote-request-form" className="quote-button quote-button--primary" disabled={submitting || !hasValidQuoteDetails}>
             {submitting ? <span className="quote-spinner" aria-hidden="true" /> : <QuoteIcon name="send" size={17} />}
-            Submit quote
+            {isGreek ? 'Υποβολή αιτήματος' : 'Submit quote'}
           </button>
         </div>
       )}

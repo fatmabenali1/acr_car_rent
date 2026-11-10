@@ -44,7 +44,8 @@ const inclusions = [
 
 const inputClass = 'h-12 w-full rounded-xl border border-[#D8D2C7] bg-white px-4 text-sm text-[#111111] focus-visible:border-[#FACC15] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FACC15] motion-reduce:transition-none'
 
-function VanCard({ van }) {
+function VanCard({ van, lang }) {
+  const isGreek = lang === 'el'
   const [imageFailed, setImageFailed] = useState(false)
 
   return (
@@ -72,12 +73,12 @@ function VanCard({ van }) {
       </div>
       <ul className="mt-4 grid grid-cols-2 gap-2 text-xs text-white/80">
         {[
-          [Truck, `Cargo ${van.volume}`],
-          [Truck, `Payload ${van.payload}`],
-          [Fuel, 'Diesel'],
-          [Users, '3 seats'],
-          [DoorOpen, '4 doors'],
-          [CarFront, 'Manual'],
+          [Truck, `${isGreek ? 'Χώρος φορτίου' : 'Cargo'} ${van.volume}`],
+          [Truck, `${isGreek ? 'Ωφέλιμο φορτίο' : 'Payload'} ${isGreek ? 'έως' : 'up to'} ${van.payload.replace(/^up to /, '')}`],
+          [Fuel, isGreek ? 'Πετρέλαιο' : 'Diesel'],
+          [Users, isGreek ? '3 θέσεις' : '3 seats'],
+          [DoorOpen, isGreek ? '4 πόρτες' : '4 doors'],
+          [CarFront, isGreek ? 'Χειροκίνητο' : 'Manual'],
         ].map(([Icon, detail]) => (
           <li key={detail} className="flex items-center gap-2">
             <Icon size={16} className="h-4 w-4 shrink-0 text-[#FACC15]" aria-hidden="true" />
@@ -89,13 +90,14 @@ function VanCard({ van }) {
         href={van.details}
         className="mt-3 inline-flex min-h-11 items-center rounded-lg px-2 text-sm font-bold text-[#FACC15] underline decoration-[#FACC15] underline-offset-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FACC15] motion-reduce:transition-none"
       >
-        View details
+        {isGreek ? 'Προβολή λεπτομερειών' : 'View details'}
       </a>
     </article>
   )
 }
 
-export function CargoVansPage() {
+export function CargoVansPage({ lang = 'en' }) {
+  const isGreek = lang === 'el'
   const [locations, setLocations] = useState([])
   const [locationError, setLocationError] = useState('')
   const [busy, setBusy] = useState(false)
@@ -125,16 +127,16 @@ export function CargoVansPage() {
         }
       })
       .catch((error) => {
-        if (active) setLocationError(error.message || 'Unable to load locations. You can still enter an address.')
+        if (active)         setLocationError(error.message || (isGreek ? 'Δεν ήταν δυνατή η φόρτωση των τοποθεσιών. Μπορείτε να εισαγάγετε μια διεύθυνση.' : 'Unable to load locations. You can still enter an address.'))
       })
     return () => {
       active = false
     }
-  }, [])
+  }, [isGreek])
 
   useEffect(() => {
-    document.title = 'Cargo Vans | Athens Car Rental'
-  }, [])
+    document.title = isGreek ? 'Φορτηγάκια | Athens Car Rental' : 'Cargo Vans | Athens Car Rental'
+  }, [isGreek])
 
   const update = (key, value) => {
     setForm((current) => ({ ...current, [key]: value }))
@@ -145,11 +147,11 @@ export function CargoVansPage() {
     event.preventDefault()
     setResult({ type: '', message: '' })
     if (new Date(`${form.returnDate}T${form.returnTime}`) <= new Date(`${form.pickupDate}T${form.pickupTime}`)) {
-      setResult({ type: 'error', message: 'Return date and time must be after pick-up.' })
+      setResult({ type: 'error', message: isGreek ? 'Η ημερομηνία και ώρα επιστροφής πρέπει να είναι μετά την παραλαβή.' : 'Return date and time must be after pick-up.' })
       return
     }
     if (!form.privacyAccepted) {
-      setResult({ type: 'error', message: 'Please accept the data processing notice to send your request.' })
+      setResult({ type: 'error', message: isGreek ? 'Αποδεχτείτε την ενημέρωση επεξεργασίας δεδομένων για να στείλετε το αίτημά σας.' : 'Please accept the data processing notice to send your request.' })
       return
     }
 
@@ -167,7 +169,7 @@ export function CargoVansPage() {
         privacyAccepted: form.privacyAccepted,
         website: form.website,
       })
-      setResult({ type: 'success', message: 'Thank you, we reply within 24 hours' })
+      setResult({ type: 'success', message: isGreek ? 'Ευχαριστούμε, θα σας απαντήσουμε εντός 24 ωρών.' : 'Thank you, we reply within 24 hours' })
       setForm((current) => ({
         ...current,
         name: '',
@@ -183,48 +185,49 @@ export function CargoVansPage() {
       }))
       setMessage('')
     } catch (error) {
-      setResult({ type: 'error', message: error.message || 'Your request could not be sent. Please try again.' })
+      setResult({ type: 'error', message: error.message || (isGreek ? 'Το αίτημά σας δεν ήταν δυνατό να σταλεί. Δοκιμάστε ξανά.' : 'Your request could not be sent. Please try again.') })
     } finally {
       setBusy(false)
     }
   }
 
   return (
-    <div className="bg-[#F7F4EF] text-[#111111]">
+    <div className="bg-[#F7F4EF] text-[#111111]" lang={lang}>
       <ContactHero
-        breadcrumb="Cargo vans"
-        eyebrow="CARGO VANS"
-        title="Cargo "
-        highlight="vans"
-        suffix=" for rent"
-        subtitle="Spacious vans for moving, deliveries and business needs throughout Athens and Greece."
+        breadcrumb={isGreek ? 'Φορτηγάκια' : 'Cargo vans'}
+        eyebrow={isGreek ? 'ΦΟΡΤΗΓΑΚΙΑ' : 'CARGO VANS'}
+        title={isGreek ? 'Φορτηγάκια ' : 'Cargo '}
+        highlight={isGreek ? 'προς ενοικίαση' : 'vans'}
+        suffix={isGreek ? '' : ' for rent'}
+        subtitle={isGreek ? 'Ευρύχωρα φορτηγάκια για μετακομίσεις, παραδόσεις και επαγγελματικές ανάγκες σε όλη την Αθήνα και την Ελλάδα.' : 'Spacious vans for moving, deliveries and business needs throughout Athens and Greece.'}
+        lang={lang}
       />
 
       <main className="mx-auto w-full max-w-[1440px] px-4 py-8 sm:px-6 lg:px-10 lg:py-10">
         <div className="grid items-start gap-6 lg:grid-cols-12 lg:gap-8">
           <section className="rounded-3xl bg-white p-5 shadow-lg ring-2 ring-[#FACC15] sm:p-8 lg:col-span-7">
-            <h2 className="text-2xl font-extrabold">Request a van quote</h2>
+            <h2 className="text-2xl font-extrabold">{isGreek ? 'Ζητήστε προσφορά για φορτηγάκι' : 'Request a van quote'}</h2>
             <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
               <div className="grid gap-4 sm:grid-cols-2">
-                <ContactField id="cargo-name" label="Full name" autoComplete="name" value={form.name} onChange={(event) => update('name', event.target.value)} required />
+                <ContactField id="cargo-name" label={isGreek ? 'Ονοματεπώνυμο' : 'Full name'} autoComplete="name" value={form.name} onChange={(event) => update('name', event.target.value)} required />
                 <ContactField id="cargo-email" label="Email" type="email" autoComplete="email" value={form.email} onChange={(event) => update('email', event.target.value)} required />
-                <ContactField id="cargo-phone" label="Phone" type="tel" autoComplete="tel" value={form.phone} onChange={(event) => update('phone', event.target.value)} required />
+                <ContactField id="cargo-phone" label={isGreek ? 'Τηλέφωνο' : 'Phone'} type="tel" autoComplete="tel" value={form.phone} onChange={(event) => update('phone', event.target.value)} required />
                 <div>
-                  <label htmlFor="cargo-van" className="mb-1.5 block text-sm font-semibold">Van</label>
+                  <label htmlFor="cargo-van" className="mb-1.5 block text-sm font-semibold">{isGreek ? 'Φορτηγάκι' : 'Van'}</label>
                   <select id="cargo-van" value={form.van} onChange={(event) => update('van', event.target.value)} required className={inputClass}>
-                    <option value="">Select a van</option>
+                    <option value="">{isGreek ? 'Επιλέξτε φορτηγάκι' : 'Select a van'}</option>
                     <option>Category V Manual - Small Van</option>
                     <option>Category V1 Manual - Large Van</option>
-                    <option>Not sure yet</option>
+                    <option>{isGreek ? 'Δεν έχω αποφασίσει ακόμη' : 'Not sure yet'}</option>
                   </select>
                 </div>
                 <div className="sm:col-span-2">
                   <ContactField
                     id="cargo-pickup-location"
-                    label="Pick-up location"
+                    label={isGreek ? 'Τοποθεσία παραλαβής' : 'Pick-up location'}
                     value={form.pickupLocation}
                     onChange={(event) => update('pickupLocation', event.target.value)}
-                    placeholder="Choose a location or enter an address"
+                    placeholder={isGreek ? 'Επιλέξτε τοποθεσία ή εισαγάγετε διεύθυνση' : 'Choose a location or enter an address'}
                     list="cargo-location-options"
                     required
                   />
@@ -233,14 +236,14 @@ export function CargoVansPage() {
                   </datalist>
                   {locationError && <p className="mt-1 text-xs text-[#5F5B53]" role="status">{locationError}</p>}
                 </div>
-                <ContactField id="cargo-pickup-date" label="Pick-up date" type="date" value={form.pickupDate} onChange={(event) => update('pickupDate', event.target.value)} required />
-                <ContactField id="cargo-pickup-time" label="Pick-up time" type="time" value={form.pickupTime} onChange={(event) => update('pickupTime', event.target.value)} required />
-                <ContactField id="cargo-return-date" label="Return date" type="date" value={form.returnDate} onChange={(event) => update('returnDate', event.target.value)} required />
-                <ContactField id="cargo-return-time" label="Return time" type="time" value={form.returnTime} onChange={(event) => update('returnTime', event.target.value)} required />
+                <ContactField id="cargo-pickup-date" label={isGreek ? 'Ημερομηνία παραλαβής' : 'Pick-up date'} type="date" value={form.pickupDate} onChange={(event) => update('pickupDate', event.target.value)} required />
+                <ContactField id="cargo-pickup-time" label={isGreek ? 'Ώρα παραλαβής' : 'Pick-up time'} type="time" value={form.pickupTime} onChange={(event) => update('pickupTime', event.target.value)} required />
+                <ContactField id="cargo-return-date" label={isGreek ? 'Ημερομηνία επιστροφής' : 'Return date'} type="date" value={form.returnDate} onChange={(event) => update('returnDate', event.target.value)} required />
+                <ContactField id="cargo-return-time" label={isGreek ? 'Ώρα επιστροφής' : 'Return time'} type="time" value={form.returnTime} onChange={(event) => update('returnTime', event.target.value)} required />
               </div>
 
               <div>
-                <label htmlFor="cargo-message" className="mb-1.5 block text-sm font-semibold">Message (optional)</label>
+                <label htmlFor="cargo-message" className="mb-1.5 block text-sm font-semibold">{isGreek ? 'Μήνυμα (προαιρετικό)' : 'Message (optional)'}</label>
                 <textarea
                   id="cargo-message"
                   value={message}
@@ -253,7 +256,7 @@ export function CargoVansPage() {
               </div>
 
               <div className="absolute -left-[10000px] top-auto h-px w-px overflow-hidden" aria-hidden="true">
-                <label htmlFor="cargo-website">Leave this field empty</label>
+                <label htmlFor="cargo-website">{isGreek ? 'Αφήστε αυτό το πεδίο κενό' : 'Leave this field empty'}</label>
                 <input id="cargo-website" name="website" tabIndex={-1} autoComplete="off" value={form.website} onChange={(event) => update('website', event.target.value)} />
               </div>
 
@@ -265,7 +268,7 @@ export function CargoVansPage() {
                   required
                   className="mt-1 h-4 w-4 shrink-0 accent-[#FACC15] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#111111] focus-visible:ring-offset-2"
                 />
-                <span>I agree to the processing of my personal data to respond to this van quote request.</span>
+                <span>{isGreek ? 'Συμφωνώ με την επεξεργασία των προσωπικών μου δεδομένων για την απάντηση στο αίτημα προσφοράς για φορτηγάκι.' : 'I agree to the processing of my personal data to respond to this van quote request.'}</span>
               </label>
 
               <button
@@ -273,7 +276,7 @@ export function CargoVansPage() {
                 disabled={busy}
                 className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#FACC15] px-5 py-3 text-sm font-extrabold text-[#111111] transition hover:bg-[#E9B900] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#111111] focus-visible:ring-offset-2 disabled:cursor-wait disabled:opacity-70 motion-reduce:transition-none sm:w-auto"
               >
-                {busy ? 'Sending…' : 'Send request'}
+                {busy ? (isGreek ? 'Αποστολή…' : 'Sending…') : (isGreek ? 'Αποστολή αιτήματος' : 'Send request')}
               </button>
               <p aria-live="polite" role={result.type === 'error' ? 'alert' : 'status'} className={`min-h-6 text-sm font-semibold ${result.type === 'success' ? 'text-green-800' : result.type === 'error' ? 'text-red-700' : ''}`}>
                 {result.message}
@@ -283,12 +286,12 @@ export function CargoVansPage() {
 
           <aside className="rounded-3xl border-2 border-[#FACC15] bg-[#111111] p-5 text-white shadow-xl sm:p-7 lg:sticky lg:top-8 lg:col-span-5">
             <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#FACC15]">ATHENS CAR RENTAL</p>
-            <h2 className="mt-2 text-2xl font-extrabold">Our vans</h2>
+            <h2 className="mt-2 text-2xl font-extrabold">{isGreek ? 'Τα φορτηγάκια μας' : 'Our vans'}</h2>
             <div className="mt-5 space-y-4">
-              {vans.map((van) => <VanCard key={van.name} van={van} />)}
+              {vans.map((van) => <VanCard key={van.name} van={van} lang={lang} />)}
             </div>
             <div className="mt-6 border-t border-white/15 pt-5">
-              <h3 className="text-lg font-extrabold">Need help?</h3>
+              <h3 className="text-lg font-extrabold">{isGreek ? 'Χρειάζεστε βοήθεια;' : 'Need help?'}</h3>
               <a href="tel:+302106022220" className="mt-3 flex min-h-11 items-center gap-3 rounded-lg text-sm font-semibold text-white hover:text-[#FACC15] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FACC15]">
                 <Phone size={20} className="h-5 w-5 shrink-0 text-[#FACC15]" aria-hidden="true" />
                 +30 210 6022220
@@ -298,21 +301,30 @@ export function CargoVansPage() {
                 info@athenscarrental.com
               </a>
               <a href="https://wa.me/302106022220" target="_blank" rel="noopener noreferrer" className="mt-2 inline-flex min-h-11 items-center rounded-lg px-2 text-sm font-bold text-[#FACC15] underline underline-offset-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FACC15]">
-                WhatsApp
+                {isGreek ? 'Στείλτε μήνυμα στο WhatsApp' : 'WhatsApp'}
               </a>
             </div>
           </aside>
         </div>
 
         <section className="py-8 lg:py-10" aria-labelledby="van-inclusions-title">
-          <h2 id="van-inclusions-title" className="text-2xl font-extrabold">Included with every van</h2>
+          <h2 id="van-inclusions-title" className="text-2xl font-extrabold">{isGreek ? 'Περιλαμβάνονται σε κάθε φορτηγάκι' : 'Included with every van'}</h2>
           <ul className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            {inclusions.map((item) => (
+            {inclusions.map((item, index) => (
               <li key={item} className="flex min-h-16 items-start gap-3 rounded-2xl bg-white p-4 shadow-sm ring-1 ring-[#E5DFD4]">
                 <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#FEF3C7] text-[#111111]">
                   <Check size={16} className="h-4 w-4 shrink-0" aria-hidden="true" />
                 </span>
-                <span className="text-sm leading-relaxed text-[#37342F]">{item}</span>
+                <span className="text-sm leading-relaxed text-[#37342F]">{isGreek ? [
+                  'Ασφάλιση αστικής ευθύνης και έναντι τρίτων',
+                  'Ασφάλιση C.D.W. (απαλλαγή από 800 έως 2.000 ευρώ)',
+                  'Ασφάλιση κλοπής και πυρκαγιάς',
+                  'Ασφάλιση για μεταφορά με πλοίο (το όχημα είναι ασφαλισμένο και κατά τη μεταφορά)',
+                  'Απεριόριστα χιλιόμετρα για ενοικιάσεις άνω των 3 ημερών',
+                  'Επιπλέον οδηγοί',
+                  'Οδική βοήθεια όλο το 24ωρο',
+                  'Παράδοση και παραλαβή στο Διεθνές Αεροδρόμιο Αθηνών και ΦΠΑ 24%',
+                ][index] : item}</span>
               </li>
             ))}
           </ul>

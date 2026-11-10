@@ -1,0 +1,173 @@
+.attika-page {
+  min-height: 100vh;
+  background:
+    radial-gradient(ellipse at 82% 18%, rgba(250, 204, 21, 0.06), transparent 34rem),
+    #0b0c0e;
+  color: #f3f4f6;
+}
+
+.attika-container {
+  width: min(100% - 3rem, 1280px);
+  margin-inline: auto;
+}
+
+.attika-hero {
+  padding: clamp(4rem, 9vw, 8rem) 0 3rem;
+  border-bottom: 1px solid #292a2d;
+}
+
+.attika-eyebrow,
+.attika-index {
+  margin: 0;
+  color: #facc15;
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+}
+
+.attika-hero h1 {
+  margin: 0.75rem 0 1.25rem;
+  color: #fff;
+  font-size: clamp(2.75rem, 7vw, 5.5rem);
+  font-weight: 800;
+  letter-spacing: normal;
+  line-height: 1;
+}
+
+.attika-title-mark {
+  display: block;
+  width: 4rem;
+  height: 3px;
+  border-radius: 999px;
+  background: #facc15;
+}
+
+.attika-destinations {
+  display: grid;
+  gap: clamp(2rem, 5vw, 4rem);
+  padding-top: clamp(2.5rem, 6vw, 5rem);
+  padding-bottom: 5rem;
+}
+
+.attika-destination {
+  display: grid;
+  grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr);
+  align-items: center;
+  gap: clamp(1.5rem, 4vw, 4rem);
+  padding: clamp(1rem, 2vw, 1.5rem);
+  border: 1px solid #292a2d;
+  border-radius: 1.5rem;
+  background: linear-gradient(145deg, #141517, #101113);
+}
+
+.attika-destination--reverse .attika-photo {
+  order: 2;
+}
+
+.attika-destination--reverse .attika-copy {
+  order: 1;
+}
+
+.attika-photo {
+  position: relative;
+  min-width: 0;
+  margin: 0;
+  overflow: hidden;
+  border: 1px solid #303236;
+  border-radius: 1rem;
+  background: #18191b;
+}
+
+.attika-photo img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+}
+
+.attika-photo figcaption {
+  padding: 0.65rem 0.8rem;
+  color: #c4c6cc;
+  font-size: 0.7rem;
+}
+
+.attika-photo figcaption a {
+  color: #facc15;
+  text-underline-offset: 3px;
+}
+
+.attika-copy {
+  min-width: 0;
+  padding: clamp(0.5rem, 2vw, 1.25rem);
+}
+
+.attika-copy h2 {
+  margin: 0.7rem 0 1rem;
+  color: #fff;
+  font-size: clamp(1.8rem, 3.5vw, 2.75rem);
+  font-weight: 800;
+  letter-spacing: normal;
+  line-height: 1.15;
+}
+
+.attika-copy p {
+  max-width: 70ch;
+  margin: 0;
+  color: #d1d5db;
+  font-size: 1rem;
+  line-height: 1.85;
+}
+
+.attika-cta {
+  display: flex;
+  justify-content: center;
+  padding-top: 0.5rem;
+}
+
+.attika-cta a {
+  display: inline-flex;
+  min-height: 3.25rem;
+  align-items: center;
+  justify-content: center;
+  gap: 0.65rem;
+  border: 1px solid #facc15;
+  border-radius: 0.75rem;
+  padding: 0.85rem 1.5rem;
+  background: #facc15;
+  color: #111;
+  font-size: 0.9rem;
+  font-weight: 800;
+  text-decoration: none;
+  transition: background-color 160ms ease, transform 160ms ease;
+}
+
+.attika-cta a:hover {
+  transform: translateY(-2px);
+  background: #ffdf4d;
+}
+
+.attika-page a:focus-visible {
+  outline: 3px solid #facc15;
+  outline-offset: 3px;
+}
+
+@media (max-width: 760px) {
+  .attika-container {
+    width: min(100% - 2rem, 1280px);
+  }
+
+  .attika-destination {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 1rem;
+    padding: 0.85rem;
+  }
+
+  .attika-destination--reverse .attika-photo,
+  .attika-destination--reverse .attika-copy {
+    order: initial;
+  }
+
+  .attika-copy {
+    padding: 0.5rem;
+  }
+}

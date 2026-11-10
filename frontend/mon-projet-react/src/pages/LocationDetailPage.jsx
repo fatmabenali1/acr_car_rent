@@ -41,43 +41,50 @@ function updateMetaDescription(description) {
   meta.content = description
 }
 
-function LocationHero({ location }) {
-  const lastSpace = location.title.lastIndexOf(' ')
-  const titleStart = lastSpace < 0 ? '' : location.title.slice(0, lastSpace + 1)
-  const titleEnd = location.title.slice(lastSpace + 1)
+function LocationHero({ location, lang }) {
+  const isGreek = lang === 'el'
+  const title = isGreek ? location.titleEl : location.title
+  const lastSpace = title.lastIndexOf(' ')
+  const titleStart = lastSpace < 0 ? '' : title.slice(0, lastSpace + 1)
+  const titleEnd = title.slice(lastSpace + 1)
 
   return (
     <section className="location-detail-hero">
       <div className="location-detail-hero-inner">
-        <nav className="location-detail-breadcrumb" aria-label="Breadcrumb">
-          <a href="/">Home</a>
+        <nav className="location-detail-breadcrumb" aria-label={isGreek ? 'Διαδρομή πλοήγησης' : 'Breadcrumb'}>
+          <a href="/">{isGreek ? 'Αρχική' : 'Home'}</a>
           <span aria-hidden="true">/</span>
-          <a href="/locations" data-location-route="list">Locations</a>
+          <a href="/locations" data-location-route="list">{isGreek ? 'Τοποθεσίες' : 'Locations'}</a>
           <span aria-hidden="true">/</span>
-          <span aria-current="page">{location.title}</span>
+          <span aria-current="page">{title}</span>
         </nav>
         <div className="location-detail-hero-copy">
           <p className="location-detail-eyebrow">ATHENS CAR RENTAL</p>
           <h1>{titleStart}<span>{titleEnd}</span></h1>
-          <p>Car rental by Athens Car Rental Greece.</p>
+          <p>{isGreek ? 'Ενοικίαση αυτοκινήτου από την Athens Car Rental Greece.' : 'Car rental by Athens Car Rental Greece.'}</p>
         </div>
       </div>
     </section>
   )
 }
 
-function LocationNotFound({ onBackToLocations }) {
+function LocationNotFound({ onBackToLocations, lang }) {
+  const isGreek = lang === 'el'
   return (
     <div className="location-not-found">
-      <h1>Location not found</h1>
-      <p>The location you are looking for could not be found.</p>
-      <button type="button" onClick={onBackToLocations}>Back to locations</button>
+      <h1>{isGreek ? 'Η τοποθεσία δεν βρέθηκε' : 'Location not found'}</h1>
+      <p>{isGreek ? 'Δεν ήταν δυνατή η εύρεση της τοποθεσίας που αναζητάτε.' : 'The location you are looking for could not be found.'}</p>
+      <button type="button" onClick={onBackToLocations}>{isGreek ? 'Επιστροφή στις τοποθεσίες' : 'Back to locations'}</button>
     </div>
   )
 }
 
-export function LocationDetailPage({ slug, onLocationNavigate, onBackToLocations, onRequestQuote, onContactUs }) {
+export function LocationDetailPage({ slug, lang = 'en', onLocationNavigate, onBackToLocations, onRequestQuote, onContactUs }) {
+  const isGreek = lang === 'el'
   const location = locationsData.find((item) => item.slug === slug)
+  const localizedLocation = useMemo(() => (location && isGreek
+    ? { ...location, name: location.nameEl, title: location.titleEl, address: location.addressEl, description: location.descriptionEl }
+    : location), [location, isGreek])
   const otherLocations = useMemo(() => locationsData.filter((item) => item.slug !== slug), [slug])
 
   useEffect(() => {
@@ -85,12 +92,14 @@ export function LocationDetailPage({ slug, onLocationNavigate, onBackToLocations
     const existingMeta = document.querySelector('meta[name="description"]')
     const originalDescription = existingMeta?.content
 
-    if (!location) {
-      document.title = 'Location not found | Athens Car Rental'
-      updateMetaDescription('Location not found. Browse Athens Car Rental locations.')
+    if (!localizedLocation) {
+      document.title = isGreek ? 'Η τοποθεσία δεν βρέθηκε | Athens Car Rental' : 'Location not found | Athens Car Rental'
+      updateMetaDescription(isGreek ? 'Η τοποθεσία δεν βρέθηκε. Δείτε τις τοποθεσίες της Athens Car Rental.' : 'Location not found. Browse Athens Car Rental locations.')
     } else {
-      document.title = `Car Rental in ${location.title} | Athens Car Rental`
-      updateMetaDescription(location.description)
+      document.title = isGreek
+        ? `Ενοικίαση αυτοκινήτου: ${localizedLocation.title} | Athens Car Rental`
+        : `Car Rental in ${localizedLocation.title} | Athens Car Rental`
+      updateMetaDescription(localizedLocation.description)
     }
 
     return () => {
@@ -101,27 +110,27 @@ export function LocationDetailPage({ slug, onLocationNavigate, onBackToLocations
         updateMetaDescription(originalDescription)
       }
     }
-  }, [location])
+  }, [localizedLocation, isGreek])
 
-  if (!location) return <LocationNotFound onBackToLocations={onBackToLocations} />
+  if (!localizedLocation) return <LocationNotFound onBackToLocations={onBackToLocations} lang={lang} />
 
-  const hasCoordinates = Number.isFinite(location.lat) && Number.isFinite(location.lng)
+  const hasCoordinates = Number.isFinite(localizedLocation.lat) && Number.isFinite(localizedLocation.lng)
   const mapSrc = hasCoordinates
-    ? `https://www.google.com/maps?q=${location.lat},${location.lng}(${encodeURIComponent(location.title)})&z=${location.mapZoom}&output=embed&hl=en`
-    : 'https://www.google.com/maps?q=Greece&z=6&output=embed&hl=en'
+    ? `https://www.google.com/maps?q=${localizedLocation.lat},${localizedLocation.lng}(${encodeURIComponent(localizedLocation.title)})&z=${localizedLocation.mapZoom}&output=embed&hl=${lang}`
+    : `https://www.google.com/maps?q=Greece&z=6&output=embed&hl=${lang}`
   const directionsUrl = hasCoordinates
-    ? `https://www.google.com/maps/search/?api=1&query=${location.lat},${location.lng}`
+    ? `https://www.google.com/maps/search/?api=1&query=${localizedLocation.lat},${localizedLocation.lng}`
     : 'https://www.google.com/maps/search/?api=1&query=Greece'
-  const getLocationHref = (item) => `/locations/${item.slug}`
+  const getLocationHref = (item) => `/locations/${item.slug}?lang=${lang}`
   const navigateToLocation = (event, item) => handleInternalLink(event, () => onLocationNavigate(item))
   const navigateBack = (event) => handleInternalLink(event, onBackToLocations)
 
   return (
-    <div className="location-detail-page">
-      <LocationHero location={location} />
+    <div className="location-detail-page" lang={lang}>
+      <LocationHero location={localizedLocation} lang={lang} />
 
       <div className="location-detail-main">
-        <section className="location-detail-grid" aria-label={`${location.title} location information`}>
+        <section className="location-detail-grid" aria-label={isGreek ? `Πληροφορίες τοποθεσίας: ${localizedLocation.title}` : `${localizedLocation.title} location information`}>
           <div className="location-detail-map">
             <iframe
               src={mapSrc}
@@ -130,40 +139,40 @@ export function LocationDetailPage({ slug, onLocationNavigate, onBackToLocations
               style={{ border: 0 }}
               loading="lazy"
               referrerPolicy="no-referrer-when-downgrade"
-              title={`Map of ${location.title}`}
+              title={isGreek ? `Χάρτης της τοποθεσίας ${localizedLocation.title}` : `Map of ${localizedLocation.title}`}
             />
             <a className="location-detail-map-link" href={directionsUrl} target="_blank" rel="noopener noreferrer">
               <DetailIcon name="external" />
-              Open in Google Maps
+              {isGreek ? 'Άνοιγμα στους Χάρτες Google' : 'Open in Google Maps'}
             </a>
           </div>
 
           <section className="location-detail-card">
             <div className="location-detail-badge">
-              <span><DetailIcon name={location.icon} /></span>
-              <p>Pick-up &amp; drop-off point</p>
+              <span><DetailIcon name={localizedLocation.icon} /></span>
+              <p>{isGreek ? 'Σημείο παραλαβής και επιστροφής' : 'Pick-up &amp; drop-off point'}</p>
             </div>
-            <h2>{location.title}</h2>
+            <h2>{localizedLocation.title}</h2>
             <div className="location-detail-contact-row">
               <DetailIcon name="map" />
-              <span>{location.address}</span>
+              <span>{localizedLocation.address}</span>
             </div>
             <div className="location-detail-contact-row">
               <DetailIcon name="phone" />
-              <a href="tel:+302106624887">{location.phone}</a>
+              <a href="tel:+302106624887">{localizedLocation.phone}</a>
             </div>
-            <p className="location-detail-description">{location.description}</p>
+            <p className="location-detail-description">{localizedLocation.description}</p>
             <div className="location-detail-actions">
               <a
                 className="location-detail-quote"
                 href="/quote"
                 onClick={(event) => handleInternalLink(event, onRequestQuote)}
               >
-                Request a quote
+                {isGreek ? 'Ζητήστε προσφορά' : 'Request a quote'}
               </a>
               <a className="location-detail-call" href="tel:+302106624887">
                 <DetailIcon name="phone" />
-                Call us
+                {isGreek ? 'Καλέστε μας' : 'Call us'}
               </a>
             </div>
           </section>
@@ -171,14 +180,14 @@ export function LocationDetailPage({ slug, onLocationNavigate, onBackToLocations
 
         <section className="location-benefits" aria-labelledby="location-benefits-heading">
           <header className="location-detail-section-heading">
-            <p className="location-detail-eyebrow">THE ACR DIFFERENCE</p>
-            <h2 id="location-benefits-heading">Why rent with us</h2>
+            <p className="location-detail-eyebrow">{isGreek ? 'Η ΔΙΑΦΟΡΑ ΤΗΣ ACR' : 'THE ACR DIFFERENCE'}</p>
+            <h2 id="location-benefits-heading">{isGreek ? 'Γιατί να μας επιλέξετε' : 'Why rent with us'}</h2>
           </header>
           <div className="location-benefit-grid">
             {[
-              'Free additional drivers',
-              'Free cancellation of your deposit as per our policy',
-              '24-hour road assistance',
+              ...(isGreek
+                ? ['Δωρεάν επιπλέον οδηγοί', 'Δωρεάν ακύρωση της προκαταβολής σύμφωνα με την πολιτική μας', 'Οδική βοήθεια όλο το 24ωρο']
+                : ['Free additional drivers', 'Free cancellation of your deposit as per our policy', '24-hour road assistance']),
             ].map((benefit) => (
               <article className="location-benefit-card" key={benefit}>
                 <span><DetailIcon name="check" /></span>
@@ -188,10 +197,10 @@ export function LocationDetailPage({ slug, onLocationNavigate, onBackToLocations
           </div>
         </section>
 
-        <nav className="location-other-nav" aria-label="Other locations">
+        <nav className="location-other-nav" aria-label={isGreek ? 'Άλλες τοποθεσίες' : 'Other locations'}>
           <div>
-            <p className="location-detail-eyebrow">EXPLORE MORE</p>
-            <h2>Other locations</h2>
+            <p className="location-detail-eyebrow">{isGreek ? 'ΕΞΕΡΕΥΝΗΣΤΕ ΠΕΡΙΣΣΟΤΕΡΑ' : 'EXPLORE MORE'}</p>
+            <h2>{isGreek ? 'Άλλες τοποθεσίες' : 'Other locations'}</h2>
           </div>
           <div className="location-other-pills">
             {otherLocations.map((item) => (
@@ -200,20 +209,20 @@ export function LocationDetailPage({ slug, onLocationNavigate, onBackToLocations
                 href={getLocationHref(item)}
                 onClick={(event) => navigateToLocation(event, item)}
               >
-                {item.title}
+                {isGreek ? item.titleEl : item.title}
               </a>
             ))}
           </div>
           <a className="location-back-link" href="/locations" onClick={navigateBack}>
-            Back to all locations
+            {isGreek ? 'Επιστροφή σε όλες τις τοποθεσίες' : 'Back to all locations'}
             <DetailIcon name="arrow" />
           </a>
         </nav>
 
         <aside className="location-detail-banner">
           <span><DetailIcon name="info" /></span>
-          <p>Delivery and collection at Athens International Airport is available 24/7 by appointment.</p>
-          <a href="/contact" onClick={(event) => handleInternalLink(event, onContactUs)}>Contact us</a>
+          <p>{isGreek ? 'Η παράδοση και παραλαβή στο Διεθνές Αεροδρόμιο Αθηνών είναι διαθέσιμη όλο το 24ωρο, κατόπιν συνεννόησης.' : 'Delivery and collection at Athens International Airport is available 24/7 by appointment.'}</p>
+          <a href="/contact" onClick={(event) => handleInternalLink(event, onContactUs)}>{isGreek ? 'Επικοινωνία' : 'Contact us'}</a>
         </aside>
       </div>
     </div>

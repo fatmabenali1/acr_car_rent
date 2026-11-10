@@ -60,6 +60,23 @@ describe('reservation and payment prefill', () => {
     window.history.replaceState({}, '', '/quote')
   })
 
+  it('renders the quote request form in Greek when Greek is selected', () => {
+    render(
+      <QuotePages
+        locations={[{ slug: 'athens-international-airport', name: 'Διεθνής Αερολιμένας Αθηνών' }]}
+        vehicles={[vehicle]}
+        lang="el"
+        api={{ createBooking: vi.fn(), getPricingEstimate: vi.fn() }}
+      />,
+    )
+
+    expect(screen.getByRole('heading', { name: 'Ζητήστε προσφορά' })).toBeTruthy()
+    expect(screen.getByLabelText('Κατηγορία οχήματος')).toBeTruthy()
+    expect(screen.getByLabelText('Τοποθεσία παραλαβής')).toBeTruthy()
+    expect(screen.getByRole('heading', { name: 'Τα στοιχεία σας' })).toBeTruthy()
+    expect(screen.getAllByRole('button', { name: /Υποβολή αιτήματος/ }).length).toBeGreaterThan(0)
+  })
+
   it('requires personal-data consent before submitting the reservation', async () => {
     const { container, api } = renderQuotePage()
     fillRequiredFields()

@@ -118,6 +118,7 @@ test("reservation API validates input, ignores submitted amounts, stores quotes 
       { ...baseRequest, returnAt: new Date(pickupAt.getTime() - 60_000).toISOString() },
       { ...baseRequest, carId: "UNKNOWN" },
       { ...baseRequest, driverAge: 22 },
+      { ...baseRequest, driverAge: 76 },
       { carId: vehicle.code },
       { ...baseRequest, notes: "x".repeat(2_001) },
       { ...baseRequest, website: "spam" },

@@ -53,7 +53,7 @@ function MapController({ onReady }) {
   return null
 }
 
-function LocationMarker({ location, markerRefs, onSelect }) {
+function LocationMarker({ location, markerRefs, onSelect, lang }) {
   return (
     <Marker
       position={[location.lat, location.lng]}
@@ -70,8 +70,8 @@ function LocationMarker({ location, markerRefs, onSelect }) {
     >
       <Popup className="locations-popup">
         <div className="locations-popup-content">
-          <strong>{location.name}</strong>
-          <span>{location.address}</span>
+          <strong>{lang === 'el' ? location.nameEl : location.name}</strong>
+          <span>{lang === 'el' ? location.addressEl : location.address}</span>
           <a href={phoneLink}>{location.phone}</a>
           <a
             className="locations-directions"
@@ -79,7 +79,7 @@ function LocationMarker({ location, markerRefs, onSelect }) {
             target="_blank"
             rel="noopener noreferrer"
           >
-            Get directions
+            {lang === 'el' ? 'Οδηγίες διαδρομής' : 'Get directions'}
             <LocationIcon name="arrow" />
           </a>
         </div>
@@ -88,7 +88,8 @@ function LocationMarker({ location, markerRefs, onSelect }) {
   )
 }
 
-export function LocationsPage({ onRequestQuote, onLocationNavigate }) {
+export function LocationsPage({ lang = 'en', onRequestQuote, onLocationNavigate }) {
+  const isGreek = lang === 'el'
   const mapElementRef = useRef(null)
   const mapRef = useRef(null)
   const markerRefs = useRef(new Map())
@@ -124,18 +125,18 @@ export function LocationsPage({ onRequestQuote, onLocationNavigate }) {
   }
 
   return (
-    <div className="locations-page">
+    <div className="locations-page" lang={lang}>
       <section className="locations-hero">
         <div className="locations-hero-inner">
-          <nav className="locations-breadcrumb" aria-label="Breadcrumb">
-            <a href="/">Home</a>
+          <nav className="locations-breadcrumb" aria-label={isGreek ? 'Διαδρομή πλοήγησης' : 'Breadcrumb'}>
+            <a href="/">{isGreek ? 'Αρχική' : 'Home'}</a>
             <span aria-hidden="true">/</span>
-            <span aria-current="page">Locations</span>
+            <span aria-current="page">{isGreek ? 'Τοποθεσίες' : 'Locations'}</span>
           </nav>
           <div className="locations-hero-copy">
             <p className="locations-eyebrow">ATHENS CAR RENTAL</p>
-            <h1>Our <span>Locations</span></h1>
-            <p>Pick up and return your car wherever it suits you in Athens.</p>
+            <h1>{isGreek ? <>Οι <span>τοποθεσίες μας</span></> : <>Our <span>Locations</span></>}</h1>
+            <p>{isGreek ? 'Παραλάβετε και επιστρέψτε το αυτοκίνητό σας σε όποιο σημείο της Αθήνας σας εξυπηρετεί.' : 'Pick up and return your car wherever it suits you in Athens.'}</p>
           </div>
         </div>
       </section>
@@ -162,6 +163,7 @@ export function LocationsPage({ onRequestQuote, onLocationNavigate }) {
                 location={location}
                 markerRefs={markerRefs}
                 onSelect={selectLocation}
+                lang={lang}
               />
             ))}
           </MapContainer>
@@ -169,8 +171,8 @@ export function LocationsPage({ onRequestQuote, onLocationNavigate }) {
 
         <section className="locations-list-section" aria-labelledby="locations-section-heading">
           <header className="locations-section-heading">
-            <p className="locations-eyebrow">FIND YOUR WAY</p>
-            <h2 id="locations-section-heading">Choose your location</h2>
+            <p className="locations-eyebrow">{isGreek ? 'ΒΡΕΙΤΕ ΤΟΝ ΔΡΟΜΟ ΣΑΣ' : 'FIND YOUR WAY'}</p>
+            <h2 id="locations-section-heading">{isGreek ? 'Επιλέξτε τοποθεσία' : 'Choose your location'}</h2>
             <span aria-hidden="true" />
           </header>
 
@@ -189,10 +191,10 @@ export function LocationsPage({ onRequestQuote, onLocationNavigate }) {
                     <span className="location-card-icon"><LocationIcon name={location.icon} /></span>
                     <span className="location-card-number">{String(location.id).padStart(2, '0')}</span>
                   </div>
-                  <h3>{location.name}</h3>
+                  <h3>{isGreek ? location.nameEl : location.name}</h3>
                   <div className="location-card-detail">
                     <LocationIcon name="map" />
-                    <span>{location.address}</span>
+                    <span>{isGreek ? location.addressEl : location.address}</span>
                   </div>
                   <div className="location-card-detail">
                     <LocationIcon name="phone" />
@@ -200,17 +202,17 @@ export function LocationsPage({ onRequestQuote, onLocationNavigate }) {
                   </div>
                   {isOther ? (
                     <button className="location-other-cta" type="button" onClick={onRequestQuote}>
-                      Request a quote
+                      {isGreek ? 'Ζητήστε προσφορά' : 'Request a quote'}
                       <LocationIcon name="arrow" />
                     </button>
                   ) : (
                     <button
                       className="location-map-link"
                       type="button"
-                      aria-label={`View ${location.name} on map`}
+                      aria-label={isGreek ? `Προβολή της τοποθεσίας ${location.nameEl} στον χάρτη` : `View ${location.name} on map`}
                       onClick={() => focusLocation(location)}
                     >
-                      View on map
+                      {isGreek ? 'Προβολή στον χάρτη' : 'View on map'}
                       <LocationIcon name="arrow" />
                     </button>
                   )}
@@ -218,9 +220,9 @@ export function LocationsPage({ onRequestQuote, onLocationNavigate }) {
                     className="location-read-more"
                     href={`/locations/${location.slug}`}
                     onClick={(event) => navigateToLocation(event, location)}
-                    aria-label={`Read more about ${location.name}`}
+                    aria-label={isGreek ? `Περισσότερα για την τοποθεσία ${location.nameEl}` : `Read more about ${location.name}`}
                   >
-                    Read more
+                    {isGreek ? 'Μάθετε περισσότερα' : 'Read more'}
                     <LocationIcon name="arrow" />
                   </a>
                 </article>
@@ -232,7 +234,9 @@ export function LocationsPage({ onRequestQuote, onLocationNavigate }) {
         <aside className="locations-info-banner">
           <span className="locations-info-icon"><LocationIcon name="info" /></span>
           <p>
-            Delivery and collection at Athens International Airport is available 24/7 by appointment. For rentals shorter than 5 days, delivery and collection are free of charge at the Airport or Koropi Metro Station only. Other locations are available for rentals of 5 days or more, for an additional fee starting from 30 euros.
+            {isGreek
+              ? 'Η παράδοση και παραλαβή στο Διεθνές Αεροδρόμιο Αθηνών είναι διαθέσιμη όλο το 24ωρο, κατόπιν συνεννόησης. Για ενοικιάσεις κάτω των 5 ημερών, η παράδοση και παραλαβή είναι δωρεάν μόνο στο Αεροδρόμιο ή στον σταθμό Μετρό Κορωπίου. Άλλες τοποθεσίες είναι διαθέσιμες για ενοικιάσεις 5 ημερών και άνω, με πρόσθετη χρέωση από 30 ευρώ.'
+              : 'Delivery and collection at Athens International Airport is available 24/7 by appointment. For rentals shorter than 5 days, delivery and collection are free of charge at the Airport or Koropi Metro Station only. Other locations are available for rentals of 5 days or more, for an additional fee starting from 30 euros.'}
           </p>
         </aside>
       </div>

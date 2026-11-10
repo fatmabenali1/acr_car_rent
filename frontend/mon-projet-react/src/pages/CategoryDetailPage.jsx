@@ -174,7 +174,8 @@ function MainCategoryImage({ category, src, index, total, visible }) {
   )
 }
 
-function CategoryHero({ category }) {
+function CategoryHero({ category, lang }) {
+  const isGreek = lang === 'el'
   const highlightAt = category.name.lastIndexOf(category.type)
   const titleStart = highlightAt >= 0 ? category.name.slice(0, highlightAt) : category.name
   const titleEnd = highlightAt >= 0 ? category.name.slice(highlightAt) : ''
@@ -182,17 +183,17 @@ function CategoryHero({ category }) {
   return (
     <section className="relative w-full bg-[#111111] py-8 lg:py-14">
       <div className="mx-auto w-full max-w-[1760px] px-4 sm:px-6 lg:px-10 2xl:px-16">
-        <nav aria-label="Breadcrumb" className="text-sm text-white/70">
-          <a href="/" className="rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FACC15] focus-visible:ring-offset-2 focus-visible:ring-offset-[#111111]">Home</a>
+        <nav aria-label={isGreek ? 'Διαδρομή πλοήγησης' : 'Breadcrumb'} className="text-sm text-white/70">
+          <a href="/" className="rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FACC15] focus-visible:ring-offset-2 focus-visible:ring-offset-[#111111]">{isGreek ? 'Αρχική' : 'Home'}</a>
           <span className="mx-2" aria-hidden="true">/</span>
-          <a href="/pricelist" className="rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FACC15] focus-visible:ring-offset-2 focus-visible:ring-offset-[#111111]">Pricelist &amp; Fleet</a>
+          <a href="/pricelist" className="rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FACC15] focus-visible:ring-offset-2 focus-visible:ring-offset-[#111111]">{isGreek ? 'Τιμοκατάλογος και στόλος' : 'Pricelist &amp; Fleet'}</a>
           <span className="mx-2" aria-hidden="true">/</span>
           <span aria-current="page">{category.name}</span>
         </nav>
         <h1 className="mt-4 max-w-4xl break-words text-3xl font-extrabold text-white lg:text-5xl">
           {titleStart}<span className="text-[#FACC15]">{titleEnd}</span>
         </h1>
-        {category.example && <p className="mt-2 max-w-3xl break-words text-sm text-white/80 sm:text-base">{category.example}</p>}
+        {category.example && <p className="mt-2 max-w-3xl break-words text-sm text-white/80 sm:text-base">{isGreek ? 'Ενδεικτικά μοντέλα: ' : ''}{category.example}</p>}
       </div>
     </section>
   )
@@ -225,7 +226,8 @@ function IncludedRate({ text }) {
   )
 }
 
-export function CategoryDetailPage({ slug }) {
+export function CategoryDetailPage({ slug, lang = 'en' }) {
+  const isGreek = lang === 'el'
   const category = categories.find((item) => item.slug === slug)
   const [galleryState, setGalleryState] = useState(() => ({ slug, index: 0, visible: true }))
   const selectedImage = galleryState.slug === slug ? galleryState.index : 0
@@ -235,18 +237,20 @@ export function CategoryDetailPage({ slug }) {
 
   useEffect(() => {
     const previousTitle = document.title
-    document.title = category ? `${category.name} | Athens Car Rental` : 'Category not found | Athens Car Rental'
+    document.title = category
+      ? `${category.name} | Athens Car Rental`
+      : isGreek ? 'Η κατηγορία δεν βρέθηκε | Athens Car Rental' : 'Category not found | Athens Car Rental'
     return () => {
       document.title = previousTitle
     }
-  }, [category])
+  }, [category, isGreek])
 
   if (!category) {
     return (
       <div className="min-h-[50vh] bg-[#F7F4EF] px-4 py-20 text-center text-[#111111]">
-        <h1 className="text-3xl font-extrabold text-[#111111]">Category not found</h1>
+        <h1 className="text-3xl font-extrabold text-[#111111]">{isGreek ? 'Η κατηγορία δεν βρέθηκε' : 'Category not found'}</h1>
         <a href="/pricelist" className="mt-6 inline-flex rounded-xl bg-[#111111] px-5 py-3 text-sm font-bold text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#111111] focus-visible:ring-offset-2">
-          Back to Pricelist &amp; Fleet
+          {isGreek ? 'Επιστροφή στον τιμοκατάλογο και τον στόλο' : 'Back to Pricelist &amp; Fleet'}
         </a>
       </div>
     )
@@ -280,14 +284,14 @@ export function CategoryDetailPage({ slug }) {
   }
 
   return (
-    <div className="min-h-screen bg-[#F7F4EF] pb-24 text-[#111111]">
-      <CategoryHero category={category} />
+    <div className="min-h-screen bg-[#F7F4EF] pb-24 text-[#111111]" lang={lang}>
+      <CategoryHero category={category} lang={lang} />
       <div className="mx-auto w-full max-w-[1760px] px-4 sm:px-6 lg:px-10 2xl:px-16">
         <div className="mt-8 grid items-start gap-6 lg:mt-[76px] lg:grid-cols-12 lg:gap-8">
           <section className="rounded-3xl bg-white p-6 shadow-xl ring-2 ring-[#FACC15] lg:col-span-8 lg:p-8">
             <div
               role="group"
-              aria-label={`${category.name} photo gallery`}
+              aria-label={isGreek ? `Συλλογή φωτογραφιών: ${category.name}` : `${category.name} photo gallery`}
               tabIndex={0}
               onKeyDown={handleGalleryKeyDown}
               onTouchStart={(event) => { touchStartX.current = event.touches[0].clientX }}
@@ -296,7 +300,7 @@ export function CategoryDetailPage({ slug }) {
             >
               <div className="relative aspect-[16/10] overflow-hidden rounded-2xl bg-[#F7F4EF] p-6">
                 <span className="absolute left-4 top-4 z-10 rounded-full bg-[#111111] px-3 py-1 text-xs font-bold uppercase text-[#FACC15]">
-                  {category.type}
+                  {isGreek ? ({ Manual: 'Χειροκίνητο', Automatic: 'Αυτόματο', Luxury: 'Πολυτελές', Van: 'Φορτηγάκι' }[category.type] || category.type) : category.type}
                 </span>
                 <MainCategoryImage
                   key={`${category.slug}-${selectedImage}`}
@@ -310,7 +314,7 @@ export function CategoryDetailPage({ slug }) {
                   <>
                     <button
                       type="button"
-                      aria-label="Previous photo"
+                      aria-label={isGreek ? 'Προηγούμενη φωτογραφία' : 'Previous photo'}
                       onClick={() => selectImage((selectedImage - 1 + images.length) % images.length)}
                       className="absolute left-3 top-1/2 z-10 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-[#111111] shadow focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#111111] focus-visible:ring-offset-2"
                     >
@@ -318,7 +322,7 @@ export function CategoryDetailPage({ slug }) {
                     </button>
                     <button
                       type="button"
-                      aria-label="Next photo"
+                      aria-label={isGreek ? 'Επόμενη φωτογραφία' : 'Next photo'}
                       onClick={() => selectImage((selectedImage + 1) % images.length)}
                       className="absolute right-3 top-1/2 z-10 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-[#111111] shadow focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#111111] focus-visible:ring-offset-2"
                     >
@@ -345,31 +349,44 @@ export function CategoryDetailPage({ slug }) {
             </div>
 
             <section className="mt-8">
-              <h2 className="text-xl font-extrabold text-[#111111]">About this category</h2>
-              <p className="mt-3 max-w-3xl text-base leading-relaxed text-slate-700">{category.description}</p>
+              <h2 className="text-xl font-extrabold text-[#111111]">{isGreek ? 'Σχετικά με αυτή την κατηγορία' : 'About this category'}</h2>
+              <p className="mt-3 max-w-3xl text-base leading-relaxed text-slate-700">{isGreek ? category.descriptionEl : category.description}</p>
               {category.priceNote && (
                 <p className="mt-5 border-l-4 border-[#FACC15] pl-4 font-semibold text-[#111111]">
-                  {category.priceNote}
+                  {isGreek ? category.priceNoteEl : category.priceNote}
                 </p>
               )}
               {category.note && (
                 <p className="mt-5 flex items-start gap-3 rounded-2xl bg-[#FEF3C7] p-5 text-sm leading-relaxed text-[#111111]">
                   <DetailIcon name="info" size={16} className="mt-0.5" />
-                  <span>{category.note}</span>
+                  <span>{isGreek ? category.noteEl : category.note}</span>
                 </p>
               )}
             </section>
 
             {category.specs && (
               <section className="mt-8">
-                <h2 className="text-xl font-extrabold text-[#111111]">Specifications</h2>
+                <h2 className="text-xl font-extrabold text-[#111111]">{isGreek ? 'Προδιαγραφές' : 'Specifications'}</h2>
                 <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3">
                   {specRows.map((row) => (
                     <Specification
                       key={row.key}
                       row={row}
-                      value={category.specs[row.key]}
-                      label={row.key === 'luggage' ? category.specs.luggageLabel : undefined}
+                      value={isGreek ? ({
+                        Manual: 'Χειροκίνητο',
+                        Automatic: 'Αυτόματο',
+                        Yes: 'Ναι',
+                        No: 'Όχι',
+                        'Unleaded 95': 'Αμόλυβδη 95',
+                        'Unleaded 95 Fuel': 'Αμόλυβδη 95',
+                        'Unleaded or Diesel': 'Αμόλυβδη ή πετρέλαιο',
+                        Unleaded: 'Αμόλυβδη',
+                        Diesel: 'Πετρέλαιο',
+                        'Turbo Diesel Euro-6': 'Turbo Diesel Euro-6',
+                      }[category.specs[row.key]] || category.specs[row.key]) : category.specs[row.key]}
+                      label={isGreek
+                        ? ({ seats: 'Θέσεις', doors: 'Πόρτες', luggage: category.specs.luggageLabel ? 'Χωρητικότητα φορτίου' : 'Αποσκευές', fuel: 'Καύσιμο', gear: 'Κιβώτιο ταχυτήτων', ac: 'Κλιματισμός', airBag: 'Αερόσακος', abs: 'ABS', cdPlayer: 'CD player' }[row.key])
+                        : row.key === 'luggage' ? category.specs.luggageLabel : undefined}
                     />
                   ))}
                 </div>
@@ -378,22 +395,31 @@ export function CategoryDetailPage({ slug }) {
 
             {category.ratesInclude?.length > 0 && (
               <section className="mt-8">
-                <h2 className="text-xl font-extrabold text-[#111111]">Our rates include</h2>
+                <h2 className="text-xl font-extrabold text-[#111111]">{isGreek ? 'Οι τιμές μας περιλαμβάνουν' : 'Our rates include'}</h2>
                 <ul className="mt-4 grid gap-3 sm:grid-cols-2">
-                  {category.ratesInclude.map((text) => <IncludedRate key={text} text={text} />)}
+                  {category.ratesInclude.map((text, index) => <IncludedRate key={text} text={isGreek ? [
+                    'Ασφάλιση αστικής ευθύνης και έναντι τρίτων',
+                    'Πλήρης ασφάλιση C.D.W. (με την αντίστοιχη απαλλαγή)',
+                    'Ασφάλιση κλοπής και πυρκαγιάς',
+                    'Απεριόριστα χιλιόμετρα για ενοικιάσεις 3+ ημερών (για ενοικιάσεις 1 ή 2 ημερών ισχύει όριο 200 χλμ. ανά ημέρα)',
+                    'Δωρεάν επιπλέον οδηγοί',
+                    'Δωρεάν άδεια μεταφοράς των οχημάτων μας με πλοίο σε όλα τα ελληνικά νησιά',
+                    'Οδική βοήθεια όλο το 24ωρο',
+                    'Τέλος ταξινόμησης οχήματος (V.R.F.) και ΦΠΑ 24%',
+                  ][index] : text} />)}
                 </ul>
               </section>
             )}
 
             <p className="mt-8 flex items-center gap-2 text-sm text-slate-600">
               <DetailIcon name="info" size={16} />
-              Fleet renewed regularly: average age 18 months, maximum 5 years.
+              {isGreek ? 'Ο στόλος ανανεώνεται τακτικά: μέση ηλικία 18 μήνες, μέγιστη ηλικία 5 έτη.' : 'Fleet renewed regularly: average age 18 months, maximum 5 years.'}
             </p>
           </section>
 
           <aside className="rounded-3xl bg-[#111111] p-6 text-white shadow-xl ring-2 ring-[#FACC15] lg:sticky lg:top-28 lg:col-span-4 lg:p-8">
             <h2 className="text-xl font-extrabold">
-              Interested in this <span className="text-[#FACC15]">car?</span>
+              {isGreek ? <>Σας ενδιαφέρει αυτό το <span className="text-[#FACC15]">αυτοκίνητο;</span></> : <>Interested in this <span className="text-[#FACC15]">car?</span></>}
             </h2>
             <p className="mt-5 break-words text-base font-bold text-white">{category.name}</p>
             {category.example && <p className="mt-1 break-words text-sm text-white/75">{category.example}</p>}
@@ -401,13 +427,13 @@ export function CategoryDetailPage({ slug }) {
               {category.specs?.seats && (
                 <span className="inline-flex items-center gap-1.5">
                   <DetailIcon name="users" size={16} />
-                  {category.specs.seats} seats
+                  {category.specs.seats} {isGreek ? 'θέσεις' : 'seats'}
                 </span>
               )}
               {category.specs?.doors && (
                 <span className="inline-flex items-center gap-1.5">
                   <DetailIcon name="door-open" size={16} />
-                  {category.specs.doors} doors
+                  {category.specs.doors} {isGreek ? 'πόρτες' : 'doors'}
                 </span>
               )}
               <span className="inline-flex items-center gap-1.5">
@@ -416,13 +442,13 @@ export function CategoryDetailPage({ slug }) {
               </span>
             </div>
             <a href={categoryUrl} className="mt-6 inline-flex h-14 w-full items-center justify-center gap-2 rounded-xl bg-[#FACC15] text-base font-extrabold uppercase text-[#111111] shadow-lg transition hover:-translate-y-0.5 hover:bg-[#EAB308] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#111111] focus-visible:ring-offset-2 motion-reduce:transform-none motion-reduce:transition-none">
-              Reserve this vehicle
+              {isGreek ? 'Κρατήστε αυτό το όχημα' : 'Reserve this vehicle'}
             </a>
             <a href={`${categoryUrl}&intent=quote`} className="mt-3 inline-flex h-12 w-full items-center justify-center rounded-xl bg-white/10 font-semibold text-white ring-1 ring-white/30 transition hover:bg-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FACC15] focus-visible:ring-offset-2 focus-visible:ring-offset-[#111111]">
-              Request a quote
+              {isGreek ? 'Ζητήστε προσφορά' : 'Request a quote'}
             </a>
             <div className="mt-6 rounded-2xl bg-white/10 p-4">
-              <h3 className="font-bold text-white">Need help?</h3>
+              <h3 className="font-bold text-white">{isGreek ? 'Χρειάζεστε βοήθεια;' : 'Need help?'}</h3>
               <a href="tel:+302106022220" className="mt-2 inline-flex items-center gap-2 text-sm text-white underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FACC15] focus-visible:ring-offset-2 focus-visible:ring-offset-[#111111]">
                 <DetailIcon name="phone" size={16} />
                 +30 210 6022220
@@ -433,13 +459,13 @@ export function CategoryDetailPage({ slug }) {
 
         <section className="mt-10 py-8 lg:py-10">
           <div className="flex flex-wrap items-end justify-between gap-4">
-            <h2 className="text-2xl font-extrabold text-[#111111]">Other fleet options</h2>
+            <h2 className="text-2xl font-extrabold text-[#111111]">{isGreek ? 'Άλλες επιλογές στόλου' : 'Other fleet options'}</h2>
             <a href="/pricelist" className="inline-flex items-center rounded-xl bg-[#111111] px-4 py-2.5 text-sm font-bold text-white transition hover:bg-[#2B2B2B] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#111111] focus-visible:ring-offset-2">
-              View all categories
+              {isGreek ? 'Προβολή όλων των κατηγοριών' : 'View all categories'}
             </a>
           </div>
           <div className="mt-6 grid items-stretch gap-6 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
-            {displayedOthers.map((item) => <VehicleCategoryCard key={item.slug} category={item} />)}
+            {displayedOthers.map((item) => <VehicleCategoryCard key={item.slug} category={item} lang={lang} />)}
           </div>
         </section>
       </div>

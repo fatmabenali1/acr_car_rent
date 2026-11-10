@@ -61,13 +61,18 @@ test("deposit confirmation and agency notification include safe details and both
     pickupAt: "2027-07-12T10:00:00.000Z",
     pickupLocation: "Athens Airport",
     agencyPhones: ["+30 210 6022220", "+30 210 6624887"],
+    agencyEmail: "info@athenscarrental.com",
   };
   const english = renderDepositConfirmation(customerPayload, "en");
+  assert.match(english.text, /Your deposit payment was successful and has been confirmed\./);
   assert.match(english.text, /EUR 100.00/);
   assert.match(english.text, /Balance due at vehicle delivery: EUR 320.00/);
   assert.match(english.text, /door no\. 3/);
   assert.match(english.text, /held for more than one year/);
-  assert.match(english.html, /<html>/);
+  assert.match(english.text, /ACR phone: \+30 210 6022220 \/ \+30 210 6624887/);
+  assert.match(english.text, /Email: info@athenscarrental\.com/);
+  assert.match(english.html, /mailto:info@athenscarrental\.com/);
+  assert.match(english.html, /<html\b/);
 
   const greek = renderDepositConfirmation(customerPayload, "el");
   assert.match(greek.text, /Δωρεάν μεταφορά/);

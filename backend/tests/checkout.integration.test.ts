@@ -45,6 +45,7 @@ test("Stripe checkout API creates private bookings and processes signed webhooks
   });
   const quoteIds: string[] = [];
   const references: string[] = [];
+  const processedEventIds: string[] = [];
   const post = (path: string, body: unknown) => fetch(`${baseUrl}${path}`, {
     method: "POST",
     headers: { "content-type": "application/json" },
@@ -103,6 +104,12 @@ test("Stripe checkout API creates private bookings and processes signed webhooks
       body: "{}",
     });
     assert.equal(invalidSignature.status, 400);
+    const missingSignature = await fetch(`${baseUrl}/api/payments/webhook`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: "{}",
+    });
+    assert.equal(missingSignature.status, 400);
 
     const payableQuote = await prisma.quote.create({
       data: {
@@ -148,8 +155,10 @@ test("Stripe checkout API creates private bookings and processes signed webhooks
     });
 
     const stripe = new Stripe("sk_test_your_secret_key_here");
+    const eventId = `evt_checkout_${suffix}`;
+    processedEventIds.push(eventId);
     const payload = JSON.stringify({
-      id: `evt_checkout_${suffix}`,
+      id: eventId,
       object: "event",
       api_version: "2025-03-31.basil",
       created: Math.floor(Date.now() / 1000),
@@ -184,11 +193,46 @@ test("Stripe checkout API creates private bookings and processes signed webhooks
     assert.equal(await prisma.processedStripeEvent.count({ where: { eventId: `evt_checkout_${suffix}` } }), 1);
     assert.equal(await prisma.emailOutbox.count({ where: { quoteId: payableQuote.id, template: { in: ["deposit_confirmation", "internal_deposit_paid"] } } }), 2);
 
+    const unknownEventId = `evt_unknown_${suffix}`;
+    processedEventIds.push(unknownEventId);
+    const unknownPayload = JSON.stringify({
+      id: unknownEventId,
+      object: "event",
+      api_version: "2025-03-31.basil",
+      created: Math.floor(Date.now() / 1000),
+      data: {
+        object: {
+          id: `cs_missing_${suffix}`,
+          object: "checkout.session",
+          payment_status: "paid",
+          status: "complete",
+          payment_intent: `pi_missing_${suffix}`,
+          metadata: { booking_id: `missing-booking-${suffix}`, reference: "9999ZZ" },
+        },
+      },
+      livemode: false,
+      pending_webhooks: 1,
+      request: null,
+      type: "checkout.session.completed",
+    });
+    const unknownSignature = stripe.webhooks.generateTestHeaderString({
+      payload: unknownPayload,
+      secret: "whsec_checkout_integration",
+    });
+    const unknownWebhook = await fetch(`${baseUrl}/api/payments/webhook`, {
+      method: "POST",
+      headers: { "content-type": "application/json", "stripe-signature": unknownSignature },
+      body: unknownPayload,
+    });
+    assert.equal(unknownWebhook.status, 200);
+    assert.deepEqual(await unknownWebhook.json(), { received: true });
+
     const limitedRequests = await Promise.all(Array.from({ length: 10 }, () => fetch(
       `${baseUrl}/api/bookings/${createdBooking.data.reference}?email=${encodeURIComponent(email)}`,
     )));
     assert.ok(limitedRequests.some((result) => result.status === 429));
   } finally {
+    await prisma.processedStripeEvent.deleteMany({ where: { eventId: { in: processedEventIds } } });
     await prisma.payment.deleteMany({ where: { quoteId: { in: quoteIds } } });
     await prisma.quote.deleteMany({ where: { id: { in: quoteIds } } });
     await prisma.location.delete({ where: { id: location.id } });

@@ -173,7 +173,7 @@ test("payment portal validates deposits and applies signed callbacks once", {
     assert.deepEqual(
       paymentEmails.map(({ template, language }) => ({ template, language })),
       [
-        { template: "deposit_confirmation", language: "el" },
+        { template: "deposit_confirmation", language: "en" },
         { template: "internal_deposit_paid", language: "el" },
       ],
     );

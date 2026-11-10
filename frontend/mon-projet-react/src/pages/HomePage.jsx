@@ -145,7 +145,8 @@ function FeatureTileIcon({ name, className, width = 28, height = 28 }) {
   )
 }
 
-export function HomePage() {
+export function HomePage({ lang = 'en' }) {
+  const isGreek = lang === 'el'
   const [form, setForm] = useState({
     pickupLocation: '',
     pickupDate: getDefaultDate(0),
@@ -174,45 +175,66 @@ export function HomePage() {
           }
         })
         .catch((error) => {
-          if (active) setLocationLookupError(error.message)
+          if (active) {
+            const genericError = 'The request could not be completed. Please try again.'
+            const networkErrors = ['Failed to fetch', 'NetworkError when attempting to fetch resource.']
+            const translatedError = isGreek && error.message === genericError
+              ? 'Το αίτημα δεν ολοκληρώθηκε. Δοκιμάστε ξανά.'
+              : isGreek && networkErrors.includes(error.message)
+                ? 'Δεν ήταν δυνατή η σύνδεση με την υπηρεσία τοποθεσιών. Ελέγξτε τη σύνδεσή σας και δοκιμάστε ξανά.'
+                : error.message
+            setLocationLookupError(translatedError)
+          }
         })
     }, 180)
     return () => {
       active = false
       window.clearTimeout(timer)
     }
-  }, [form.pickupLocation])
+  }, [form.pickupLocation, isGreek])
 
   // Service arguments and category tiles for the My Services block.
   const serviceCards = [
     {
       id: 'service',
-      title: 'OUR SERVICE',
+      title: isGreek ? 'ΟΙ ΥΠΗΡΕΣΙΕΣ ΜΑΣ' : 'OUR SERVICE',
       icon: 'clock',
       items: [
-        'A friendly, face-to-face contact with prompt reply to all your needs/requests, always on time as per agreed appointments and always beside our customers 24 hours per day, seven days per week.',
-        '24-hour road assistance in Athens and throughout Greece.',
+        isGreek
+          ? 'Φιλική, προσωπική επικοινωνία και άμεση ανταπόκριση σε κάθε ανάγκη ή αίτημά σας, πάντα στην ώρα μας σύμφωνα με τα συμφωνημένα ραντεβού και πάντα δίπλα στους πελάτες μας, 24 ώρες την ημέρα, επτά ημέρες την εβδομάδα.'
+          : 'A friendly, face-to-face contact with prompt reply to all your needs/requests, always on time as per agreed appointments and always beside our customers 24 hours per day, seven days per week.',
+        isGreek ? 'Οδική βοήθεια όλο το 24ωρο στην Αθήνα και σε ολόκληρη την Ελλάδα.' : '24-hour road assistance in Athens and throughout Greece.',
       ],
     },
     {
       id: 'fleet',
-      title: 'OUR FLEET',
+      title: isGreek ? 'Ο ΣΤΟΛΟΣ ΜΑΣ' : 'OUR FLEET',
       icon: 'car-front',
       items: [
-        'An extensive fleet of cars of all types and categories. Renewed and well maintained only with genuine spare parts, insuring a relaxed and safe journeys around Athens and Greece.',
-        "Our fleet includes small, economic and compact cars, large cars, mini-vans, SUV's and luxury cars.",
-        'Safety is a must; therefore, we made sure that all our vehicles are equipped with the latest safety features and standards.',
+        isGreek
+          ? 'Μεγάλος στόλος αυτοκινήτων όλων των τύπων και κατηγοριών. Ανανεώνεται και συντηρείται με γνήσια ανταλλακτικά, εξασφαλίζοντας άνετες και ασφαλείς διαδρομές στην Αθήνα και την Ελλάδα.'
+          : 'An extensive fleet of cars of all types and categories. Renewed and well maintained only with genuine spare parts, insuring a relaxed and safe journeys around Athens and Greece.',
+        isGreek
+          ? 'Ο στόλος μας περιλαμβάνει μικρά, οικονομικά και μεσαίας κατηγορίας αυτοκίνητα, μεγάλα αυτοκίνητα, μίνι βαν, SUV και πολυτελή αυτοκίνητα.'
+          : "Our fleet includes small, economic and compact cars, large cars, mini-vans, SUV's and luxury cars.",
+        isGreek
+          ? 'Η ασφάλεια είναι απαραίτητη· γι’ αυτό φροντίσαμε όλα τα οχήματά μας να διαθέτουν τα πιο σύγχρονα χαρακτηριστικά και πρότυπα ασφαλείας.'
+          : 'Safety is a must; therefore, we made sure that all our vehicles are equipped with the latest safety features and standards.',
       ],
     },
     {
       id: 'rates',
-      title: 'OUR RATES',
+      title: isGreek ? 'ΟΙ ΤΙΜΕΣ ΜΑΣ' : 'OUR RATES',
       icon: 'star',
       items: [
-        'Our straight-forward, final, competitive prices, with no "Hidden Extras" that will satisfy even the most demanding customers.',
-        'Special offers and discounts are always available especially for long term rentals.',
+        isGreek
+          ? 'Οι ξεκάθαρες, τελικές και ανταγωνιστικές τιμές μας, χωρίς «κρυφές χρεώσεις», ικανοποιούν ακόμη και τους πιο απαιτητικούς πελάτες.'
+          : 'Our straight-forward, final, competitive prices, with no "Hidden Extras" that will satisfy even the most demanding customers.',
+        isGreek
+          ? 'Ειδικές προσφορές και εκπτώσεις είναι πάντα διαθέσιμες, ιδιαίτερα για μακροχρόνιες ενοικιάσεις.'
+          : 'Special offers and discounts are always available especially for long term rentals.',
       ],
-      ctaText: 'See our rates',
+      ctaText: isGreek ? 'Δείτε τις τιμές μας' : 'See our rates',
       ctaHref: '/pricelist',
       isLink: true,
     },
@@ -221,24 +243,24 @@ export function HomePage() {
   const photoCards = [
     {
       href: '/vehicles/luxury-cars',
-      title: 'Luxury & Premium',
-      subtitle: 'Cars',
+      title: isGreek ? 'Πολυτελείας & ανώτερης κατηγορίας' : 'Luxury & Premium',
+      subtitle: isGreek ? 'Οχήματα' : 'Cars',
       image: '/images/cars/luxrybmw.jpg',
-      alt: 'BMW X1 luxury SUV rental in Athens',
+      alt: isGreek ? 'Ενοικίαση πολυτελούς SUV BMW X1 στην Αθήνα' : 'BMW X1 luxury SUV rental in Athens',
     },
     {
       href: '/vehicles/mini-vans',
-      title: 'Rent a Mini Bus',
-      subtitle: 'Athens Airport',
+      title: isGreek ? 'Ενοικίαση μικρού λεωφορείου' : 'Rent a Mini Bus',
+      subtitle: isGreek ? 'Αεροδρόμιο Αθηνών' : 'Athens Airport',
       image: '/images/cars/minibus.jpg',
-      alt: 'Peugeot minibus rental at Athens Airport',
+      alt: isGreek ? 'Ενοικίαση minibus Peugeot στο Αεροδρόμιο Αθηνών' : 'Peugeot minibus rental at Athens Airport',
     },
     {
       href: '/vehicles/suvs',
-      title: 'SUV Car Rental',
-      subtitle: 'Available for bookings',
+      title: isGreek ? 'Ενοικίαση SUV' : 'SUV Car Rental',
+      subtitle: isGreek ? 'Διαθέσιμο για κρατήσεις' : 'Available for bookings',
       image: '/images/cars/suvcarrental.jpg',
-      alt: 'Skoda Kodiaq SUV rental in Athens',
+      alt: isGreek ? 'Ενοικίαση SUV Skoda Kodiaq στην Αθήνα' : 'Skoda Kodiaq SUV rental in Athens',
     },
   ]
 
@@ -264,31 +286,31 @@ export function HomePage() {
     const nextErrors = {}
 
     if (!form.pickupLocation.trim()) {
-      nextErrors.pickupLocation = 'Location required.'
+      nextErrors.pickupLocation = isGreek ? 'Απαιτείται τοποθεσία παραλαβής.' : 'Location required.'
     }
 
     if (!form.pickupDate) {
-      nextErrors.pickupDate = 'Pickup date required.'
+      nextErrors.pickupDate = isGreek ? 'Απαιτείται ημερομηνία παραλαβής.' : 'Pickup date required.'
     }
 
     if (!form.pickupTime) {
-      nextErrors.pickupTime = 'Pickup time required.'
+      nextErrors.pickupTime = isGreek ? 'Απαιτείται ώρα παραλαβής.' : 'Pickup time required.'
     }
 
     if (!form.returnDate) {
-      nextErrors.returnDate = 'Return date required.'
+      nextErrors.returnDate = isGreek ? 'Απαιτείται ημερομηνία επιστροφής.' : 'Return date required.'
     }
 
     if (!form.returnTime) {
-      nextErrors.returnTime = 'Return time required.'
+      nextErrors.returnTime = isGreek ? 'Απαιτείται ώρα επιστροφής.' : 'Return time required.'
     }
 
     if (form.pickupDate && form.returnDate && form.returnDate < form.pickupDate) {
-      nextErrors.returnDate = 'Return date must be after pickup.'
+      nextErrors.returnDate = isGreek ? 'Η ημερομηνία επιστροφής δεν μπορεί να προηγείται της παραλαβής.' : 'Return date must be after pickup.'
     }
 
     if (form.returnDifferentLocation && !form.returnLocation.trim()) {
-      nextErrors.returnLocation = 'Return location required.'
+      nextErrors.returnLocation = isGreek ? 'Απαιτείται τοποθεσία επιστροφής.' : 'Return location required.'
     }
 
     setErrors(nextErrors)
@@ -323,7 +345,7 @@ export function HomePage() {
             <div className="absolute inset-0 -z-10">
               <img
                 src="/images/image.png"
-                alt="Athens Car Rental fleet"
+                alt={isGreek ? 'Στόλος οχημάτων Athens Car Rental' : 'Athens Car Rental fleet'}
                 width={1920}
                 height={900}
                 loading="eager"
@@ -338,16 +360,18 @@ export function HomePage() {
             <div className="relative z-10 mx-auto w-full max-w-[1760px] px-4 pb-56 pt-10 sm:px-6 lg:px-10 lg:pb-56 lg:pt-14 2xl:px-16">
               <div className="lg:max-w-[52%]">
                 <p className="text-xs font-semibold uppercase tracking-[0.25em] text-[#FACC15]">
-                  ATHENS CAR RENTAL GREECE
+                  {isGreek ? 'ATHENS CAR RENTAL · ΕΛΛΑΔΑ' : 'ATHENS CAR RENTAL GREECE'}
                 </p>
 
                 <h1 className="mt-4 text-4xl font-extrabold leading-[1.1] text-white sm:text-5xl lg:text-[3.5rem] lg:drop-shadow-[0_2px_12px_rgba(0,0,0,0.55)]">
-                  <span className="block">Find Your Perfect Car</span>
-                  <span className="block">Drive Your <span className="text-[#FACC15]">Journey</span></span>
+                  <span className="block">{isGreek ? 'Βρείτε το ιδανικό αυτοκίνητο' : 'Find Your Perfect Car'}</span>
+                  <span className="block">{isGreek ? 'Ξεκινήστε το' : 'Drive Your'} <span className="text-[#FACC15]">{isGreek ? 'ταξίδι σας' : 'Journey'}</span></span>
                 </h1>
 
                 <p className="mt-5 max-w-md text-base font-medium text-white/95 drop-shadow-[0_1px_8px_rgba(0,0,0,0.6)]">
-                  Premium, flexible and reliable fleet for airport pickup, city travel, island escapes and long stays.
+                  {isGreek
+                    ? 'Ποιοτικός, ευέλικτος και αξιόπιστος στόλος για παραλαβή από το αεροδρόμιο, μετακινήσεις στην πόλη, αποδράσεις στα νησιά και μακροχρόνιες ενοικιάσεις.'
+                    : 'Premium, flexible and reliable fleet for airport pickup, city travel, island escapes and long stays.'}
                 </p>
 
                 <div className="mt-8 flex gap-3">
@@ -355,21 +379,21 @@ export function HomePage() {
                     href="/booking"
                     className="inline-flex items-center justify-center rounded-xl bg-[#FACC15] px-7 py-3.5 text-sm font-bold text-slate-900 transition hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FACC15] focus-visible:ring-offset-2 motion-reduce:transition-none motion-reduce:hover:translate-y-0"
                   >
-                    Book now
+                    {isGreek ? 'Κάντε κράτηση' : 'Book now'}
                   </a>
                   <a
-                    href="/rates"
+                    href="/customer-reviews"
                     className="inline-flex items-center justify-center rounded-xl border border-white/50 bg-black/70 px-7 py-3.5 text-sm font-bold text-white transition hover:-translate-y-0.5 hover:bg-black/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FACC15] focus-visible:ring-offset-2 motion-reduce:transition-none motion-reduce:hover:translate-y-0 lg:bg-white/15 lg:ring-1 lg:ring-white/50 lg:backdrop-blur-sm lg:hover:bg-white/25"
                   >
-                    View rates
+                    {isGreek ? 'Κριτικές πελατών' : 'Customer reviews'}
                   </a>
                 </div>
 
                 <div className="mt-10 mb-12 flex flex-nowrap gap-8 overflow-x-auto pb-1">
                   {[
-                    { title: 'Free cancellation', detail: 'Change anytime' },
-                    { title: 'Unlimited mileage', detail: 'On 3 days+' },
-                    { title: '24/7 assistance', detail: 'Road support' },
+                    { title: isGreek ? 'Δωρεάν ακύρωση' : 'Free cancellation', detail: isGreek ? 'Αλλάξτε όποτε θέλετε' : 'Change anytime' },
+                    { title: isGreek ? 'Απεριόριστα χιλιόμετρα' : 'Unlimited mileage', detail: isGreek ? 'Για ενοικιάσεις 3+ ημερών' : 'On 3 days+' },
+                    { title: isGreek ? 'Υποστήριξη 24/7' : '24/7 assistance', detail: isGreek ? 'Οδική βοήθεια' : 'Road support' },
                   ].map((item) => (
                     <div key={item.title} className="flex min-w-0 shrink-0 items-center gap-3 whitespace-nowrap">
                       <span className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-black shadow-sm ring-1 ring-slate-200 lg:bg-white/20 lg:text-white lg:ring-white/40">
@@ -394,24 +418,24 @@ export function HomePage() {
                 <button
                   type="button"
                   className="inline-flex items-center gap-2 rounded-lg border-b-2 border-[#FACC15] bg-[#FACC15] px-4 py-2 text-sm font-semibold text-black"
-                  aria-label="Rent a Car"
+                  aria-label={isGreek ? 'Ενοικίαση αυτοκινήτου' : 'Rent a Car'}
                 >
                   <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-4 w-4 shrink-0" aria-hidden="true">
                     <path d="M6 16.5h12l-1.1-5.2a2 2 0 0 0-1.9-1.5H9a2 2 0 0 0-1.9 1.5L6 16.5Z" strokeLinecap="round" strokeLinejoin="round" />
                     <path d="M8 10.5 9.2 7h5.6l1.2 3.5M8 16.5v1.3m8-1.3v1.3M8.5 17.5a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3Zm7 0a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3Z" strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
-                  <span>Rent a Car</span>
+                  <span>{isGreek ? 'Ενοικίαση αυτοκινήτου' : 'Rent a Car'}</span>
                 </button>
                 <a
                   href="/cargo-vans"
                   className="inline-flex min-h-11 items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold text-[#111111] transition hover:bg-[#FEF3C7] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FACC15] motion-reduce:transition-none"
                 >
-                  Cargo vans
+                  {isGreek ? 'Φορτηγάκια' : 'Cargo vans'}
                 </a>
               </div>
 
               <form
-                aria-label="Car rental search form"
+                aria-label={isGreek ? 'Φόρμα αναζήτησης ενοικίασης αυτοκινήτου' : 'Car rental search form'}
                 className="mt-3"
                 method="GET"
                 action="/search"
@@ -421,10 +445,10 @@ export function HomePage() {
                 <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-[2.2fr_1.3fr_1fr_1.3fr_1fr_auto] lg:items-end lg:gap-4">
                   <FieldBlock
                     id="pickup-location"
-                    label="Pick-up location"
+                    label={isGreek ? 'Τοποθεσία παραλαβής' : 'Pick-up location'}
                     value={form.pickupLocation}
                     onChange={(value) => handleLocationChange(value)}
-                    placeholder="City or airport"
+                    placeholder={isGreek ? 'Πόλη ή αεροδρόμιο' : 'City or airport'}
                     error={errors.pickupLocation}
                     list="pickup-locations"
                     inputMode="text"
@@ -436,11 +460,15 @@ export function HomePage() {
                       </svg>
                     }
                   />
-                  {locationLookupError && <p className="text-xs text-red-600" role="status">{locationLookupError}</p>}
+                  {locationLookupError && (
+                    <p className="text-xs text-red-600" role="status">
+                      {isGreek ? `Σφάλμα κατά την αναζήτηση τοποθεσιών: ${locationLookupError}` : locationLookupError}
+                    </p>
+                  )}
 
                   <FieldBlock
                     id="pickup-date"
-                    label="Pick-up date"
+                    label={isGreek ? 'Ημερομηνία παραλαβής' : 'Pick-up date'}
                     type="date"
                     value={form.pickupDate}
                     onChange={(value) => updateField('pickupDate', value)}
@@ -456,7 +484,7 @@ export function HomePage() {
 
                   <FieldBlock
                     id="pickup-time"
-                    label="Pick-up time"
+                    label={isGreek ? 'Ώρα παραλαβής' : 'Pick-up time'}
                     type="select"
                     value={form.pickupTime}
                     onChange={(value) => updateField('pickupTime', value)}
@@ -472,7 +500,7 @@ export function HomePage() {
 
                   <FieldBlock
                     id="return-date"
-                    label="Drop-off date"
+                    label={isGreek ? 'Ημερομηνία επιστροφής' : 'Drop-off date'}
                     type="date"
                     value={form.returnDate}
                     onChange={(value) => updateField('returnDate', value)}
@@ -488,7 +516,7 @@ export function HomePage() {
 
                   <FieldBlock
                     id="return-time"
-                    label="Drop-off time"
+                    label={isGreek ? 'Ώρα επιστροφής' : 'Drop-off time'}
                     type="select"
                     value={form.returnTime}
                     onChange={(value) => updateField('returnTime', value)}
@@ -512,7 +540,9 @@ export function HomePage() {
                         <circle cx="11" cy="11" r="5.5" />
                         <path d="m16 16 4 4" strokeLinecap="round" strokeLinejoin="round" />
                       </svg>
-                      <span>{isLoading ? 'Searching...' : 'Search cars'}</span>
+                      <span>{isLoading
+                        ? isGreek ? 'Αναζήτηση...' : 'Searching...'
+                        : isGreek ? 'Αναζήτηση αυτοκινήτων' : 'Search cars'}</span>
                     </button>
                   </div>
                 </div>
@@ -525,7 +555,7 @@ export function HomePage() {
                     onChange={(event) => updateField('returnDifferentLocation', event.target.checked)}
                     className="h-4 w-4 accent-[#FACC15]"
                   />
-                  Return in another location
+                  {isGreek ? 'Επιστροφή σε άλλη τοποθεσία' : 'Return in another location'}
                 </label>
 
                 <div
@@ -538,10 +568,10 @@ export function HomePage() {
                   <div className="pt-1">
                     <FieldBlock
                       id="return-location"
-                      label="Drop-off location"
+                      label={isGreek ? 'Τοποθεσία επιστροφής' : 'Drop-off location'}
                       value={form.returnLocation}
                       onChange={(value) => updateField('returnLocation', value)}
-                      placeholder="City or airport"
+                      placeholder={isGreek ? 'Πόλη ή αεροδρόμιο' : 'City or airport'}
                       error={errors.returnLocation}
                       icon={
                         <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-4 w-4 shrink-0" aria-hidden="true">
@@ -559,7 +589,7 @@ export function HomePage() {
           <section className="relative z-10 pt-12 pb-8 lg:pt-12">
             <div className="mx-auto w-full max-w-[1760px] px-4 sm:px-6 lg:px-10 2xl:px-16">
               <p className="mb-8 text-center text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">
-                Supported by
+                {isGreek ? 'Με την υποστήριξη' : 'Supported by'}
                 <span className="mx-auto mt-3 block h-0.5 w-10 rounded-full bg-[#FACC15]" aria-hidden="true" />
               </p>
 
@@ -567,7 +597,7 @@ export function HomePage() {
                 {[
                   {
                     src: '/images/eu_co_funded_en.jpg',
-                    alt: 'Co-funded by the European Union',
+                    alt: isGreek ? 'Με τη συγχρηματοδότηση της Ευρωπαϊκής Ένωσης' : 'Co-funded by the European Union',
                     width: 220,
                     height: 120,
                     className: 'max-h-14 max-w-[85%] w-auto',
@@ -575,7 +605,7 @@ export function HomePage() {
                   },
                   {
                     src: '/images/ESPA_Logo.EL_.jpg',
-                    alt: 'ESPA 2021-2027 Partnership Agreement',
+                    alt: isGreek ? 'ΕΣΠΑ 2021-2027 – Συμφωνία Εταιρικής Σχέσης' : 'ESPA 2021-2027 Partnership Agreement',
                     width: 220,
                     height: 120,
                     className: 'max-h-20 max-w-[85%] w-auto',
@@ -583,7 +613,7 @@ export function HomePage() {
                   },
                   {
                     src: '/images/competitiveness-2021-2027.jpg',
-                    alt: 'Programme Competitiveness 2021-2027',
+                    alt: isGreek ? 'Πρόγραμμα «Ανταγωνιστικότητα 2021-2027»' : 'Programme Competitiveness 2021-2027',
                     width: 220,
                     height: 120,
                     className: 'max-h-14 max-w-[85%] w-auto',
@@ -623,15 +653,15 @@ export function HomePage() {
             <div className="why-acr__container">
               <div className="why-acr__header">
                 <div>
-                  <p className="why-acr__eyebrow">ATHENS CAR RENTAL · GREECE</p>
+                  <p className="why-acr__eyebrow">{isGreek ? 'ATHENS CAR RENTAL · ΕΛΛΑΔΑ' : 'ATHENS CAR RENTAL · GREECE'}</p>
                   <h2 className="why-acr__title">
-                    Why travelers
+                    {isGreek ? 'Γιατί οι ταξιδιώτες' : 'Why travelers'}
                     <br />
-                    choose ACR
+                    {isGreek ? 'επιλέγουν την ACR' : 'choose ACR'}
                   </h2>
                 </div>
                 <a className="why-acr__reviews" href="/customer-reviews">
-                  <span>View customer reviews</span>
+                  <span>{isGreek ? 'Δείτε τις κριτικές πελατών' : 'View customer reviews'}</span>
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" aria-hidden="true">
                     <path d="M5 12h14m-6-6 6 6-6 6" strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
@@ -648,13 +678,15 @@ export function HomePage() {
                   </div>
                   <div className="why-acr__card-content">
                     <p className="why-acr__stat why-acr__stat--dark">2022–<br />2026</p>
-                    <h3 className="why-acr__card-title">Travelers' Choice Award</h3>
+                    <h3 className="why-acr__card-title">{isGreek ? 'Βραβείο Επιλογής Ταξιδιωτών' : "Travelers' Choice Award"}</h3>
                     <p className="why-acr__description why-acr__description--dark">
-                      Winners of the TripAdvisor Travelers' Choice Award.
+                      {isGreek
+                        ? 'Νικητές του βραβείου Travelers’ Choice του TripAdvisor.'
+                        : "Winners of the TripAdvisor Travelers' Choice Award."}
                     </p>
                   </div>
                   <a className="why-acr__link" href="/tripadvisor">
-                    <span>See the award</span>
+                    <span>{isGreek ? 'Δείτε το βραβείο' : 'See the award'}</span>
                     <ArrowIcon />
                   </a>
                 </article>
@@ -673,13 +705,15 @@ export function HomePage() {
                     <circle cx="166" cy="75" r="11" fill="var(--acr-yellow)" stroke="currentColor" strokeWidth="2.5" />
                   </svg>
                   <div className="why-acr__card-content">
-                    <h3 className="why-acr__card-title">ACR Cargo Vans</h3>
+                    <h3 className="why-acr__card-title">{isGreek ? 'Επαγγελματικά βαν ACR' : 'ACR Cargo Vans'}</h3>
                     <p className="why-acr__description why-acr__description--yellow">
-                      Spacious vans for moving, deliveries and group trips.
+                      {isGreek
+                        ? 'Ευρύχωρα βαν για μετακομίσεις, παραδόσεις και ομαδικές μετακινήσεις.'
+                        : 'Spacious vans for moving, deliveries and group trips.'}
                     </p>
                   </div>
                   <a className="why-acr__link" href="/cargo-vans">
-                    <span>Book your van</span>
+                    <span>{isGreek ? 'Κλείστε το βαν σας' : 'Book your van'}</span>
                     <ArrowIcon />
                   </a>
                 </article>
@@ -689,17 +723,19 @@ export function HomePage() {
                     <span className="why-acr__icon-chip why-acr__icon-chip--soft">
                       <FeatureTileIcon name="tag" />
                     </span>
-                    <span className="why-acr__save-badge">SAVE MORE</span>
+                    <span className="why-acr__save-badge">{isGreek ? 'ΕΞΟΙΚΟΝΟΜΗΣΤΕ ΠΕΡΙΣΣΟΤΕΡΑ' : 'SAVE MORE'}</span>
                   </div>
                   <div className="why-acr__card-content">
-                    <p className="why-acr__stat why-acr__stat--white">Early<br />bird</p>
-                    <h3 className="why-acr__card-title">Early Bird Discounts</h3>
+                    <p className="why-acr__stat why-acr__stat--white">
+                      {isGreek ? <>Έγκαιρη<br />κράτηση</> : <>Early<br />bird</>}
+                    </p>
+                    <h3 className="why-acr__card-title">{isGreek ? 'Εκπτώσεις έγκαιρης κράτησης' : 'Early Bird Discounts'}</h3>
                     <p className="why-acr__description why-acr__description--white">
-                      Book early and get our best prices.
+                      {isGreek ? 'Κάντε κράτηση νωρίς και επωφεληθείτε από τις καλύτερες τιμές μας.' : 'Book early and get our best prices.'}
                     </p>
                   </div>
                   <a className="why-acr__link" href="/early-bird">
-                    <span>Get the offer</span>
+                    <span>{isGreek ? 'Δείτε την προσφορά' : 'Get the offer'}</span>
                     <ArrowIcon />
                   </a>
                 </article>
@@ -738,11 +774,11 @@ export function HomePage() {
                         <circle cx="12" cy="12" r="8" />
                         <path d="M12 10.5v5M12 7.5h.01" strokeLinecap="round" strokeLinejoin="round" />
                       </svg>
-                      <span>About us</span>
+                      <span>{isGreek ? 'Σχετικά με εμάς' : 'About us'}</span>
                     </div>
 
                     <h2 className="mt-5 text-3xl font-extrabold leading-tight text-[#111111] lg:text-4xl">
-                      Reliable car rental near Athens Airport
+                      {isGreek ? 'Αξιόπιστη ενοικίαση αυτοκινήτου κοντά στο Αεροδρόμιο Αθηνών' : 'Reliable car rental near Athens Airport'}
                     </h2>
 
                     <div className="mt-6 flex flex-wrap gap-2">
@@ -751,21 +787,21 @@ export function HomePage() {
                           <path d="M7 3v3M17 3v3M4 9.5h16" strokeLinecap="round" strokeLinejoin="round" />
                           <rect x="3" y="5" width="18" height="16" rx="2" />
                         </svg>
-                        Since 2005
+                        {isGreek ? 'Από το 2005' : 'Since 2005'}
                       </span>
                       <span className="inline-flex items-center gap-2 rounded-full bg-[#FEF3C7] px-3 py-1.5 text-sm font-semibold text-[#111111] ring-1 ring-[#FACC15]/60">
                         <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-4 w-4 shrink-0" aria-hidden="true">
                           <path d="M12 21s6-5.686 6-11a6 6 0 1 0-12 0c0 5.314 6 11 6 11Z" />
                           <circle cx="12" cy="10" r="2.5" />
                         </svg>
-                        Koropi, near the airport
+                        {isGreek ? 'Κορωπί, κοντά στο αεροδρόμιο' : 'Koropi, near the airport'}
                       </span>
                       <span className="inline-flex items-center gap-2 rounded-full bg-[#FEF3C7] px-3 py-1.5 text-sm font-semibold text-[#111111] ring-1 ring-[#FACC15]/60">
                         <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-4 w-4 shrink-0" aria-hidden="true">
                           <path d="M5 15.5h14l-1.1-5.2a2 2 0 0 0-1.9-1.5H8a2 2 0 0 0-1.9 1.5L5 15.5Z" strokeLinecap="round" strokeLinejoin="round" />
                           <path d="M8 15.5v1.3m8-1.3v1.3M9 17.5a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3Zm6 0a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3Z" strokeLinecap="round" strokeLinejoin="round" />
                         </svg>
-                        Modern fleet
+                        {isGreek ? 'Σύγχρονος στόλος' : 'Modern fleet'}
                       </span>
                     </div>
 
@@ -773,7 +809,7 @@ export function HomePage() {
                       href="/about"
                       className="mt-8 inline-flex items-center gap-2 rounded-xl bg-[#111111] px-7 py-3.5 text-sm font-bold text-white transition hover:-translate-y-0.5 hover:bg-[#2B2B2B] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#111111] focus-visible:ring-offset-2 motion-reduce:transition-none"
                     >
-                      <span>View more about us</span>
+                      <span>{isGreek ? 'Μάθετε περισσότερα για εμάς' : 'View more about us'}</span>
                       <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-4 w-4 shrink-0" aria-hidden="true">
                         <path d="M5 12h14" strokeLinecap="round" strokeLinejoin="round" />
                         <path d="m13 5 7 7-7 7" strokeLinecap="round" strokeLinejoin="round" />
@@ -784,11 +820,21 @@ export function HomePage() {
                   <div className="rounded-2xl bg-[#FEF3C7] p-6 shadow-sm ring-1 ring-[#FACC15]/50 lg:p-8">
                     <div className="border-l-4 border-[#111111] pl-5">
                       <p className="max-w-3xl text-base font-medium leading-relaxed text-[#111111]">
-                        <span className="font-extrabold">Athens Car Rental</span> was founded in 2005 and ever since then we strive year after year to provide the best of our services for our clients. We are located in Koropi, near to the Athens International Airport "Eleftherios Venizelos".
+                        {isGreek ? (
+                          <>
+                            Η <span className="font-extrabold">Athens Car Rental</span> ιδρύθηκε το 2005 και έκτοτε προσπαθούμε κάθε χρόνο να προσφέρουμε τις καλύτερες υπηρεσίες στους πελάτες μας. Βρισκόμαστε στο Κορωπί, κοντά στο Διεθνές Αεροδρόμιο Αθηνών «Ελευθέριος Βενιζέλος».
+                          </>
+                        ) : (
+                          <>
+                            <span className="font-extrabold">Athens Car Rental</span> was founded in 2005 and ever since then we strive year after year to provide the best of our services for our clients. We are located in Koropi, near to the Athens International Airport "Eleftherios Venizelos".
+                          </>
+                        )}
                       </p>
 
                       <p className="mt-4 max-w-3xl text-base leading-relaxed text-[#111111]/90">
-                        Our many years of experience in the field of short-term car rental and leasing allow us to commit to you for reliable services and vehicles. With large variety of the latest released car models, our aim is to serve you best by adapting our services to the modern needs of everyday life, thereby delivering a unique experience!
+                        {isGreek
+                          ? 'Η πολυετής εμπειρία μας στη βραχυχρόνια ενοικίαση αυτοκινήτων και τη χρηματοδοτική μίσθωση μάς επιτρέπει να σας προσφέρουμε αξιόπιστες υπηρεσίες και οχήματα. Με μεγάλη ποικιλία από τα πιο πρόσφατα μοντέλα αυτοκινήτων, στόχος μας είναι να σας εξυπηρετούμε με τον καλύτερο τρόπο, προσαρμόζοντας τις υπηρεσίες μας στις σύγχρονες ανάγκες της καθημερινότητας και προσφέροντας μια μοναδική εμπειρία!'
+                          : 'Our many years of experience in the field of short-term car rental and leasing allow us to commit to you for reliable services and vehicles. With large variety of the latest released car models, our aim is to serve you best by adapting our services to the modern needs of everyday life, thereby delivering a unique experience!'}
                       </p>
                     </div>
                   </div>
@@ -801,9 +847,11 @@ export function HomePage() {
           <section className="bg-[#F7F4EF] py-8 lg:py-8">
             <div className="mx-auto w-full max-w-[1760px] px-4 sm:px-6 lg:px-10 2xl:px-16">
               <div className="mb-8 text-center">
-                <span className="text-xs font-semibold uppercase tracking-[0.25em] text-[#FACC15]">WHY ATHENS CAR RENTAL</span>
+                <span className="text-xs font-semibold uppercase tracking-[0.25em] text-[#FACC15]">
+                  {isGreek ? 'ΓΙΑΤΙ ATHENS CAR RENTAL' : 'WHY ATHENS CAR RENTAL'}
+                </span>
                 <h2 className="mt-4 text-3xl font-extrabold text-[#111111] lg:text-4xl">
-                  Service, fleet and rates you can trust
+                  {isGreek ? 'Υπηρεσίες, στόλος και τιμές που εμπνέουν εμπιστοσύνη' : 'Service, fleet and rates you can trust'}
                 </h2>
               </div>
 
@@ -880,7 +928,7 @@ export function HomePage() {
                           aria-expanded={isExpanded}
                           className="mt-auto inline-flex items-center gap-2 pt-6 text-sm font-semibold text-[#111111] hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FACC15] focus-visible:ring-offset-2 motion-reduce:transition-none"
                         >
-                          <span>Read more</span>
+                          <span>{isGreek ? 'Διαβάστε περισσότερα' : 'Read more'}</span>
                           <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className={`h-4 w-4 shrink-0 transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`} aria-hidden="true">
                             <path d="m6 9 6 6 6-6" strokeLinecap="round" strokeLinejoin="round" />
                           </svg>

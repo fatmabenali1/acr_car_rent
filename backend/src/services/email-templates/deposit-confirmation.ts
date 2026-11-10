@@ -12,6 +12,7 @@ export type DepositConfirmationPayload = {
   returnLocation?: string;
   category?: string;
   agencyPhones: string[];
+  agencyEmail?: string;
 }
 
 export function renderDepositConfirmation(
@@ -22,6 +23,7 @@ export function renderDepositConfirmation(
   const pickupAt = formatRentalDate(payload.pickupAt, language);
   const returnAt = payload.returnAt ? formatRentalDate(payload.returnAt, language) : "—";
   const phones = payload.agencyPhones.join(" / ");
+  const agencyEmail = payload.agencyEmail;
   const subject = isGreek
     ? `Επιβεβαίωση προκαταβολής — ${payload.reference}`
     : `Deposit payment confirmed — ${payload.reference}`;
@@ -35,6 +37,8 @@ export function renderDepositConfirmation(
       shuttle: "Δωρεάν μεταφορά από την πόρτα 3 της αίθουσας αφίξεων. Το γραφείο μας βρίσκεται 5 λεπτά από το αεροδρόμιο.",
       documents: "Έχετε μαζί σας άδεια οδήγησης που την κατέχετε για περισσότερο από ένα έτος και διεθνή άδεια οδήγησης, εφόσον απαιτείται.",
       hello: "Γεια σας",
+      confirmation: "Η πληρωμή της προκαταβολής ολοκληρώθηκε με επιτυχία και επιβεβαιώθηκε.",
+      contact: "Επικοινωνία ACR",
     }
     : {
       paid: "Deposit amount paid",
@@ -45,9 +49,12 @@ export function renderDepositConfirmation(
       shuttle: "Free shuttle from door no. 3 in the arrivals hall. Our office is 5 minutes from the airport.",
       documents: "Please bring a driving licence held for more than one year and an international driving permit if required.",
       hello: "Hello",
+      confirmation: "Your deposit payment was successful and has been confirmed.",
+      contact: "ACR contact",
     };
   const text = [
     `${values.hello} ${payload.customerFirstName},`,
+    values.confirmation,
     "",
     `${isGreek ? "Αναφορά" : "Reference"}: ${payload.reference}`,
     `${values.paid}: ${isGreek ? "€" : "EUR "}${payload.amountPaidEur}`,
@@ -62,8 +69,10 @@ export function renderDepositConfirmation(
     values.documents,
     "",
     `${isGreek ? "Τηλέφωνα ACR" : "ACR phone"}: ${phones}`,
+    ...(agencyEmail ? [`${isGreek ? "Email ACR" : "Email"}: ${agencyEmail}`] : []),
   ].join("\n");
   const html = page(subject, `<p>${values.hello} ${escapeHtml(payload.customerFirstName)},</p>
+    <p>${escapeHtml(values.confirmation)}</p>
     <p><strong>${isGreek ? "Αναφορά" : "Reference"}:</strong> ${escapeHtml(payload.reference)}</p>
     <p><strong>${values.paid}:</strong> ${isGreek ? "€" : "EUR "}${escapeHtml(payload.amountPaidEur)}<br>
     <strong>${values.balance}:</strong> ${isGreek ? "€" : "EUR "}${escapeHtml(payload.balanceRemainingEur)}</p>
@@ -72,6 +81,8 @@ export function renderDepositConfirmation(
     <strong>${values.category}:</strong> ${escapeHtml(payload.category ?? "—")}</p>
     <p>The rental agreement includes a pre-authorization on a credit card at pickup. The deposit refund is subject to the cancellation notice period: 7 days for small and medium cars, or 15 days for SUVs and minivans. Refunds are handled manually.</p>
     <p>${values.shuttle}</p><p>${values.documents}</p>
-    <p>${isGreek ? "Τηλέφωνα ACR" : "ACR phone"}: ${escapeHtml(phones)}</p>`);
+    <p>${isGreek ? "Τηλέφωνα ACR" : "ACR phone"}: ${escapeHtml(phones)}${agencyEmail
+      ? `<br>${escapeHtml(values.contact)}: <a href="mailto:${escapeHtml(agencyEmail)}">${escapeHtml(agencyEmail)}</a>`
+      : ""}</p>`);
   return { subject, text, html };
 }

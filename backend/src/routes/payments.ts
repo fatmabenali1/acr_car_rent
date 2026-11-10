@@ -291,6 +291,7 @@ async function applyCallback(callback: VerifiedPaymentCallback) {
         returnLocation,
         category,
         agencyPhones: [env.AGENCY_PHONE, env.AGENCY_SECONDARY_PHONE],
+        agencyEmail: env.AGENCY_EMAIL,
       };
       const internalPayload = {
         reference: quote.reference,
@@ -311,7 +312,7 @@ async function applyCallback(callback: VerifiedPaymentCallback) {
             quoteId: payment.quoteId,
             recipient: quote.customerEmail,
             template: "deposit_confirmation",
-            language,
+            language: "en",
             payload: customerPayload,
           },
           {

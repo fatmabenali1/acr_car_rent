@@ -190,44 +190,588 @@ input[type="time"] {
 }
 
 .site-footer {
-  background: #0b0b0d;
-  color: rgba(255, 255, 255, 0.8);
+  --footer-yellow: #facc15;
+  position: relative;
   margin-top: 4rem;
+  overflow: hidden;
+  background:
+    radial-gradient(ellipse at 50% 70%, rgba(250, 204, 21, 0.035), transparent 42rem),
+    #08090a;
+  color: #d1d5db;
 }
 
-.footer-grid {
-  width: 100%;
-  max-width: 1760px;
-  margin: 0 auto;
+.footer-bento-wrap,
+.footer-bottom {
+  width: min(100% - 3rem, 1440px);
+  margin-inline: auto;
+}
+
+.footer-card-kicker {
+  display: block;
+  color: var(--footer-yellow);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+}
+
+.footer-bento-wrap {
+  position: relative;
   padding-top: 3rem;
-  padding-bottom: 2rem;
+}
+
+.footer-watermark {
+  position: absolute;
+  right: -0.02em;
+  bottom: -0.29em;
+  z-index: 0;
+  color: transparent;
+  font-size: clamp(16rem, 34vw, 31rem);
+  font-weight: 800;
+  letter-spacing: normal;
+  line-height: 0.8;
+  -webkit-text-stroke: 1px rgba(255, 255, 255, 0.045);
+  pointer-events: none;
+  user-select: none;
+}
+
+.footer-bento {
+  position: relative;
+  z-index: 1;
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 2rem;
+  grid-template-areas:
+    "brand brand explore fleet"
+    "help map map contact"
+    "payment payment payment payment";
+  gap: 1rem;
+  padding-bottom: 3rem;
 }
 
-.site-footer h4,
-.site-footer p,
-.site-footer li,
-.site-footer a {
-  color: white;
+.footer-card {
+  min-width: 0;
+  padding: 1.5rem;
+  border: 1px solid #252628;
+  border-radius: 1.5rem;
+  background: linear-gradient(145deg, #141517, #101113);
 }
 
-.site-footer ul {
-  margin: 0.75rem 0 0;
-  padding-left: 1.1rem;
+.footer-brand {
+  grid-area: brand;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.footer-logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 1rem;
+  color: #fff;
+  text-decoration: none;
+}
+
+.footer-logo img {
+  width: 4.25rem;
+  height: 4.25rem;
+  flex: 0 0 4.25rem;
+  object-fit: contain;
+  border-radius: 0.8rem;
+  background: #fff;
+}
+
+.footer-logo > span {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.footer-logo strong {
+  color: #fff;
+  font-size: 1.15rem;
+  font-weight: 800;
+  letter-spacing: normal;
+  line-height: 1.2;
+}
+
+.footer-logo small {
+  color: var(--footer-yellow);
+  font-size: 0.68rem;
+  font-weight: 750;
+  letter-spacing: 0.1em;
+}
+
+.footer-brand > p {
+  max-width: 34rem;
+  margin: 1.25rem 0 1rem;
+  color: #d1d5db;
+  font-size: 0.9rem;
+  line-height: 1.7;
+}
+
+.footer-trust-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.45rem 0.7rem;
+  border: 1px solid #45464a;
+  border-radius: 999px;
+  color: #f3f4f6;
+  font-size: 0.76rem;
+  font-weight: 700;
+}
+
+.footer-trust-badge svg {
+  color: var(--footer-yellow);
+}
+
+.footer-social-links {
+  display: flex;
+  gap: 0.55rem;
+  margin-top: 1rem;
+}
+
+.footer-social-links a {
+  display: grid;
+  width: 2.5rem;
+  height: 2.5rem;
+  place-items: center;
+  border: 1px solid #45464a;
+  border-radius: 50%;
+  background: #1b1c1e;
+  color: #f3f4f6;
+  transition: border-color 160ms ease, color 160ms ease, background 160ms ease, transform 160ms ease;
+}
+
+.footer-social-links svg {
+  width: 1.15rem;
+  height: 1.15rem;
+}
+
+.footer-social-links a:hover {
+  transform: translateY(-2px);
+  border-color: var(--footer-yellow);
+  background: rgba(250, 204, 21, 0.1);
+  color: var(--footer-yellow);
+}
+
+.footer-column {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+
+.footer-explore {
+  grid-area: explore;
+}
+
+.footer-fleet {
+  grid-area: fleet;
+}
+
+.footer-help {
+  grid-area: help;
+}
+
+.footer-column h3,
+.footer-contact-card h3 {
+  margin: 0 0 0.55rem;
+  color: var(--footer-yellow);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  line-height: 1.5;
+  text-transform: uppercase;
+}
+
+.footer-column > a,
+.footer-text-button {
+  position: relative;
+  display: inline-flex;
+  max-width: 100%;
+  align-items: baseline;
+  gap: 0.25rem;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: #d1d5db;
+  font: inherit;
+  font-size: 0.84rem;
+  line-height: 1.5;
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+  transition: color 160ms ease, transform 160ms ease;
+}
+
+.footer-column > a::after,
+.footer-text-button::after {
+  content: '↗';
+  max-width: 0;
+  overflow: hidden;
+  color: var(--footer-yellow);
+  opacity: 0;
+  transition: max-width 160ms ease, opacity 160ms ease;
+}
+
+.footer-column > a:hover,
+.footer-text-button:hover {
+  transform: translateX(2px);
+  color: var(--footer-yellow);
+}
+
+.footer-column > a:hover::after,
+.footer-text-button:hover::after {
+  max-width: 1em;
+  opacity: 1;
+}
+
+.footer-map-card {
+  grid-area: map;
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(12rem, 0.8fr);
+  gap: 1.25rem;
+  align-items: stretch;
+}
+
+.footer-map-illustration {
+  position: relative;
+  min-height: 12rem;
+  overflow: hidden;
+  border: 1px solid #34363a;
+  border-radius: 1rem;
+  background-color: #1b1d1e;
+  background-image:
+    linear-gradient(32deg, transparent 47%, #393b3b 48%, #393b3b 50%, transparent 51%),
+    linear-gradient(142deg, transparent 39%, #303233 40%, #303233 42%, transparent 43%),
+    linear-gradient(90deg, transparent 49%, #282a2b 50%, #282a2b 52%, transparent 53%),
+    linear-gradient(0deg, transparent 60%, #282a2b 61%, #282a2b 63%, transparent 64%);
+  background-size: 170px 130px, 190px 155px, 105px 95px, 135px 115px;
+}
+
+.footer-map-illustration::before,
+.footer-map-illustration::after {
+  position: absolute;
+  width: 120%;
+  height: 1.25rem;
+  border: 1px solid rgba(250, 204, 21, 0.3);
+  border-right: 0;
+  border-left: 0;
+  content: '';
+  transform: rotate(-24deg);
+}
+
+.footer-map-illustration::before {
+  top: 35%;
+  left: -10%;
+}
+
+.footer-map-illustration::after {
+  top: 68%;
+  left: 2%;
+  transform: rotate(28deg);
+}
+
+.footer-map-road {
+  position: absolute;
+  z-index: 1;
+  width: 1rem;
+  height: 130%;
+  border-right: 1px solid #444647;
+  border-left: 1px solid #444647;
+  background: #242627;
+  transform: rotate(36deg);
+}
+
+.footer-map-road-one {
+  top: -15%;
+  left: 30%;
+}
+
+.footer-map-road-two {
+  top: -8%;
+  left: 72%;
+  transform: rotate(-32deg);
+}
+
+.footer-map-road-three {
+  top: -15%;
+  left: 52%;
+  width: 0.6rem;
+  transform: rotate(70deg);
+}
+
+.footer-map-pin {
+  position: absolute;
+  top: 44%;
+  left: 52%;
+  z-index: 2;
+  display: grid;
+  width: 2.75rem;
+  height: 2.75rem;
+  place-items: center;
+  border: 4px solid rgba(250, 204, 21, 0.25);
+  border-radius: 50%;
+  background: var(--footer-yellow);
+  color: #111;
+  transform: translate(-50%, -50%);
+}
+
+.footer-map-label {
+  position: absolute;
+  right: 0.75rem;
+  bottom: 0.75rem;
+  z-index: 2;
+  padding: 0.3rem 0.45rem;
+  border-radius: 0.35rem;
+  background: #101113;
+  color: #e5e7eb;
+  font-size: 0.58rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+}
+
+.footer-map-copy {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+}
+
+.footer-map-copy .footer-card-kicker {
+  color: var(--footer-yellow);
+}
+
+.footer-map-copy p {
+  margin: 0.7rem 0 1rem;
+  color: #f3f4f6;
+  font-size: 0.98rem;
+  font-weight: 650;
+  line-height: 1.55;
+}
+
+.footer-directions-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  color: var(--footer-yellow);
+  font-size: 0.83rem;
+  font-weight: 750;
+  text-decoration: none;
+}
+
+.footer-directions-link:hover {
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+.footer-contact-card {
+  grid-area: contact;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.footer-contact-card h3 {
+  margin-bottom: 0;
+}
+
+.footer-hours {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.65rem;
+  color: var(--footer-yellow);
+}
+
+.footer-hours > span {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.footer-hours strong {
+  color: #f3f4f6;
+  font-size: 0.82rem;
+}
+
+.footer-hours small {
+  color: #d1d5db;
+  font-size: 0.75rem;
+  line-height: 1.5;
+}
+
+.footer-contact-detail {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.65rem;
+  color: #d1d5db;
+  font-size: 0.8rem;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+  text-decoration: none;
+  transition: color 160ms ease;
+}
+
+.footer-contact-detail svg {
+  flex: 0 0 auto;
+  color: var(--footer-yellow);
+}
+
+.footer-contact-detail:hover {
+  color: var(--footer-yellow);
+}
+
+.footer-payment-card {
+  grid-area: payment;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+  padding: 1rem 1.5rem;
+}
+
+.footer-payment-copy {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: var(--footer-yellow);
+}
+
+.footer-payment-copy > span {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.footer-payment-copy strong {
+  color: #f3f4f6;
+  font-size: 0.85rem;
+}
+
+.footer-payment-copy small {
+  color: #d1d5db;
+  font-size: 0.75rem;
+}
+
+.footer-card-brands {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+}
+
+.footer-visa-mark,
+.footer-mastercard-mark {
+  display: inline-flex;
+  width: 3.4rem;
+  height: 2.1rem;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #57595d;
+  border-radius: 0.35rem;
+  background: #f4f4f4;
+  color: #14234a;
+}
+
+.footer-visa-mark {
+  font-size: 1rem;
+  font-style: italic;
+  font-weight: 900;
+}
+
+.footer-mastercard-mark {
+  position: relative;
+}
+
+.footer-mastercard-mark i {
+  width: 1.12rem;
+  height: 1.12rem;
+  border-radius: 50%;
+  background: #eb001b;
+}
+
+.footer-mastercard-mark i + i {
+  margin-left: -0.4rem;
+  background: #f79e1b;
+  mix-blend-mode: multiply;
 }
 
 .footer-bottom {
-  width: 100%;
-  max-width: 1760px;
-  margin: 0 auto;
-  padding-bottom: 1.5rem;
+  position: relative;
+  z-index: 1;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
-  border-top: 1px solid rgba(255,255,255,0.12);
+  padding: 1.2rem 0;
+  border-top: 1px solid #303235;
+  color: #d1d5db;
+  font-size: 0.78rem;
+}
+
+.footer-bottom p {
+  margin: 0;
+}
+
+.footer-bottom a {
+  color: var(--footer-yellow);
+  font-weight: 750;
+  text-decoration: none;
+}
+
+.footer-bottom a:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.footer-bottom-actions {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+}
+
+.footer-back-top {
+  display: inline-flex;
+  min-height: 2.75rem;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border: 0;
+  border-radius: 999px;
+  padding: 0.55rem 0.65rem 0.55rem 1rem;
+  background: var(--footer-yellow);
+  color: #111;
+  font: inherit;
+  font-size: 0.77rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: transform 160ms ease, background-color 160ms ease;
+}
+
+.footer-back-top:hover {
+  transform: translateY(-2px);
+  background: #ffdf4d;
+}
+
+.footer-back-top svg {
+  width: 1.6rem;
+  height: 1.6rem;
+  padding: 0.3rem;
+  border-radius: 50%;
+  background: #111;
+  color: var(--footer-yellow);
+}
+
+.site-footer a:focus-visible,
+.site-footer button:focus-visible {
+  outline: 3px solid var(--footer-yellow);
+  outline-offset: 3px;
+}
+
+.site-footer a:focus:not(:focus-visible),
+.site-footer button:focus:not(:focus-visible) {
+  outline: none;
 }
 
 .cookie-banner {
@@ -370,21 +914,29 @@ input[type="time"] {
 
 @media (max-width: 980px) {
   .top-strip-inner,
-  .header-inner,
-  .footer-bottom {
+  .header-inner {
     flex-wrap: wrap;
     justify-content: center;
   }
 
-  .footer-grid {
-    grid-template-columns: 1fr 1fr;
+  .footer-bento {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-areas:
+      "brand brand"
+      "explore fleet"
+      "help contact"
+      "map map"
+      "payment payment";
+  }
+
+  .footer-brand {
+    grid-area: brand;
   }
 }
 
 @media (max-width: 720px) {
   .top-strip-inner,
-  .header-inner,
-  .footer-bottom {
+  .header-inner {
     width: 100%;
   }
 
@@ -412,8 +964,66 @@ input[type="time"] {
     text-align: center;
   }
 
-  .footer-grid {
+  .footer-bento-wrap,
+  .footer-bottom {
+    width: min(100% - 2rem, 1440px);
+  }
+
+  .footer-bento-wrap {
+    padding-top: 2.5rem;
+  }
+
+  .footer-bento {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      "brand"
+      "explore"
+      "fleet"
+      "help"
+      "map"
+      "contact"
+      "payment";
+    gap: 0.75rem;
+    padding-bottom: 2rem;
+  }
+
+  .footer-card {
+    padding: 1.25rem;
+    border-radius: 1.25rem;
+  }
+
+  .footer-map-card {
     grid-template-columns: 1fr;
+  }
+
+  .footer-map-illustration {
+    min-height: 10rem;
+  }
+
+  .footer-payment-card {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .footer-watermark {
+    right: -0.1em;
+    bottom: -0.1em;
+    font-size: 15rem;
+  }
+
+  .footer-bottom {
+    align-items: flex-start;
+    flex-direction: column;
+    justify-content: center;
+    gap: 0.65rem;
+    padding-block: 1rem;
+  }
+
+  .footer-bottom-actions {
+    width: 100%;
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 0.8rem;
   }
 
   .cookie-banner {

@@ -1,7 +1,7 @@
 export function FleetPages({ groups = [], vehicles = [], lang = 'en', loading, error, fallbackImage }) {
   return (
     <section className="page page-fleet">
-      {loading && <div className="state-box">Loading fleet…</div>}
+      {loading && <div className="state-box">{lang === 'el' ? 'Φόρτωση στόλου…' : 'Loading fleet…'}</div>}
       {error && !loading && <div className="state-box error">{error}</div>}
 
       {!loading && !error && (
@@ -14,7 +14,7 @@ export function FleetPages({ groups = [], vehicles = [], lang = 'en', loading, e
                 </button>
               ))
             ) : (
-              <div className="state-box">No vehicle groups available.</div>
+              <div className="state-box">{lang === 'el' ? 'Δεν υπάρχουν διαθέσιμες ομάδες οχημάτων.' : 'No vehicle groups available.'}</div>
             )}
           </div>
 
@@ -27,13 +27,13 @@ export function FleetPages({ groups = [], vehicles = [], lang = 'en', loading, e
                   <p>{vehicle.description || ''}</p>
                   <ul>
                     <li>{vehicle.transmission || 'Manual'}</li>
-                    <li>{vehicle.seats || 0} seats</li>
-                    <li>{vehicle.luggageMaxLitres || 0} luggage</li>
+                    <li>{vehicle.seats || 0} {lang === 'el' ? 'θέσεις' : 'seats'}</li>
+                    <li>{vehicle.luggageMaxLitres || 0} {lang === 'el' ? 'αποσκευές' : 'luggage'}</li>
                   </ul>
                 </article>
               ))
             ) : (
-              <div className="state-box">No vehicles available.</div>
+              <div className="state-box">{lang === 'el' ? 'Δεν υπάρχουν διαθέσιμα οχήματα.' : 'No vehicles available.'}</div>
             )}
           </div>
         </>
