@@ -6,10 +6,13 @@ import { resolve } from "node:path";
 import swaggerUi from "swagger-ui-express";
 import { corsOrigins, env } from "./config/env";
 import { prisma } from "./db";
-import { errorHandler } from "./middleware/errors";
+import { AppError, errorHandler } from "./middleware/errors";
 import { adminRouter } from "./routes/admin";
 import { contactRouter } from "./routes/contact";
+import { inquiriesRouter } from "./routes/inquiries";
+import { reservationsRouter } from "./routes/reservations";
 import { availabilityRouter } from "./routes/availability";
+import { checkoutRouter, stripeWebhookRouter } from "./routes/checkout";
 import { paymentsRouter } from "./routes/payments";
 import { pricingRouter } from "./routes/pricing";
 import { publicRouter } from "./routes/public";
@@ -32,12 +35,13 @@ app.use(cors({
       return;
     }
 
-    callback(new Error("Not allowed by CORS"));
+    callback(new AppError(403, "CORS_ORIGIN_NOT_ALLOWED", "Origin is not allowed"));
   },
   credentials: true,
   methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization", "Accept", "Accept-Language", "X-Requested-With"],
+  allowedHeaders: ["Content-Type", "Authorization", "Accept", "Accept-Language", "X-Requested-With", "Idempotency-Key"],
 }));
+app.use("/api", stripeWebhookRouter);
 app.use(express.json({ limit: "1mb" }));
 app.use(rateLimit({ windowMs: 15 * 60 * 1000, limit: 100 }));
 
@@ -253,6 +257,68 @@ const openApiDocument = {
           "202": { description: "Quote request accepted; acknowledgement and agency notification are queued" },
           "400": { description: "Invalid request, reCAPTCHA rejection, or rental policy violation" },
           "503": { description: "reCAPTCHA verification is unavailable or not configured" },
+        },
+      },
+    },
+    "/reservations": {
+      post: {
+        summary: "Create a reservation request with a server-calculated placeholder quote",
+        servers: [{ url: "/api", description: "Reservation and checkout API" }],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                required: [
+                  "carId", "pickupLocation", "returnLocation", "pickupAt", "returnAt",
+                  "driverAge", "driverLicenceYears", "firstName", "lastName", "email",
+                  "phone", "country", "privacyAccepted",
+                ],
+                properties: {
+                  carId: { type: "string", example: "D1" },
+                  pickupLocation: { type: "string", maxLength: 300 },
+                  returnLocation: { type: "string", maxLength: 300 },
+                  pickupAt: { type: "string", format: "date-time" },
+                  returnAt: { type: "string", format: "date-time" },
+                  driverAge: { type: "integer", minimum: 23, maximum: 75 },
+                  driverLicenceYears: { type: "integer", minimum: 1, maximum: 80 },
+                  firstName: { type: "string", maxLength: 100 },
+                  lastName: { type: "string", maxLength: 100 },
+                  email: { type: "string", format: "email" },
+                  phone: { type: "string", maxLength: 30 },
+                  country: { type: "string", maxLength: 100 },
+                  coupon: { type: "string", maxLength: 80 },
+                  notes: { type: "string", maxLength: 2000 },
+                  language: { type: "string", enum: ["en", "el"] },
+                  privacyAccepted: { type: "boolean", enum: [true] },
+                  website: { type: "string", maxLength: 500, description: "Honeypot; must be empty" },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          "201": { description: "Reservation reference, server total/deposit, and emailSent status" },
+          "400": { description: "Field-level validation error" },
+          "429": { description: "Reservation request rate limit exceeded" },
+        },
+      },
+    },
+    "/reservations/{reference}/payment-info": {
+      get: {
+        summary: "Get the minimum customer and deposit fields needed to pre-fill payment",
+        servers: [{ url: "/api", description: "Reservation and checkout API" }],
+        parameters: [{
+          name: "reference",
+          in: "path",
+          required: true,
+          schema: { type: "string", pattern: "^\\d{4}[A-Z]{2}$" },
+        }],
+        responses: {
+          "200": { description: "Reservation payment form prefill fields only" },
+          "404": { description: "Reservation not found" },
+          "429": { description: "Payment info lookup rate limit exceeded" },
         },
       },
     },
@@ -558,8 +624,17 @@ app.use("/api/v1", quotesRouter);
 app.use("/api/v1", paymentsRouter);
 app.use("/api/v1", availabilityRouter);
 app.use("/api/v1", contactRouter);
+app.use("/api", inquiriesRouter);
+app.use("/api", reservationsRouter);
 app.use("/api/v1/admin", adminRouter);
+app.use("/api", checkoutRouter);
 app.use("/api/v1", (_request, response) => {
+  response.status(404).json({
+    success: false,
+    error: { code: "NOT_FOUND", message: "Endpoint not found" },
+  });
+});
+app.use("/api", (_request, response) => {
   response.status(404).json({
     success: false,
     error: { code: "NOT_FOUND", message: "Endpoint not found" },

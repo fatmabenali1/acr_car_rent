@@ -78,8 +78,8 @@ const iconPaths = {
 }
 
 const specRows = [
-  { key: 'seats', label: 'Seats', icon: 'users', suffix: ' seats' },
-  { key: 'doors', label: 'Doors', icon: 'door-open', suffix: ' doors' },
+  { key: 'seats', label: 'Seats', icon: 'users' },
+  { key: 'doors', label: 'Doors', icon: 'door-open' },
   { key: 'luggage', label: 'Luggage', icon: 'luggage' },
   { key: 'fuel', label: 'Fuel Type', icon: 'fuel' },
   { key: 'gear', label: 'Gear', icon: 'settings-2' },
@@ -110,8 +110,8 @@ function DetailIcon({ name, size = 20, className = '' }) {
 
 function CategoryPhoto({ category, src, index, total, selected, onSelect }) {
   const [failed, setFailed] = useState(!src)
-  const alt = category.code === 'B'
-    ? 'Fiat Panda or similar, Category B Manual car rental Athens'
+  const alt = category.example
+    ? `${category.name}: ${category.example}`
     : `${category.name} car rental Athens, photo ${index + 1}/${total}`
 
   return (
@@ -132,8 +132,12 @@ function CategoryPhoto({ category, src, index, total, selected, onSelect }) {
           alt={alt}
           width="96"
           height="64"
+          loading="lazy"
           className="h-full w-full object-contain"
-          onError={() => setFailed(true)}
+          onError={() => {
+            console.warn(`Unable to load vehicle category image for "${category.name}": ${src}`)
+            setFailed(true)
+          }}
         />
       )}
     </button>
@@ -142,14 +146,14 @@ function CategoryPhoto({ category, src, index, total, selected, onSelect }) {
 
 function MainCategoryImage({ category, src, index, total, visible }) {
   const [failed, setFailed] = useState(!src)
-  const alt = category.code === 'B'
-    ? 'Fiat Panda or similar, Category B Manual car rental Athens'
+  const alt = category.example
+    ? `${category.name}: ${category.example}`
     : `${category.name} car rental Athens, photo ${index + 1}/${total}`
 
   if (failed) {
     return (
-      <div className="absolute inset-0 flex items-center justify-center text-slate-300" aria-hidden="true">
-        <DetailIcon name="car-front" size={96} />
+      <div className="absolute inset-0 flex items-center justify-center bg-[#F7F4EF] text-slate-400">
+        <DetailIcon name="car-front" size={64} />
       </div>
     )
   }
@@ -162,13 +166,16 @@ function MainCategoryImage({ category, src, index, total, visible }) {
       height="600"
       loading="eager"
       className={`h-full w-full object-contain transition-opacity duration-300 motion-reduce:transition-none ${visible ? 'opacity-100' : 'opacity-0'}`}
-      onError={() => setFailed(true)}
+      onError={() => {
+        console.warn(`Unable to load vehicle category image for "${category.name}": ${src}`)
+        setFailed(true)
+      }}
     />
   )
 }
 
 function CategoryHero({ category }) {
-  const highlightAt = category.name.lastIndexOf(category.transmission)
+  const highlightAt = category.name.lastIndexOf(category.type)
   const titleStart = highlightAt >= 0 ? category.name.slice(0, highlightAt) : category.name
   const titleEnd = highlightAt >= 0 ? category.name.slice(highlightAt) : ''
 
@@ -191,9 +198,8 @@ function CategoryHero({ category }) {
   )
 }
 
-function Specification({ row, value }) {
+function Specification({ row, value, label }) {
   if (!value) return null
-  const displayValue = row.suffix ? `${value}${row.suffix}` : value
 
   return (
     <div className="flex items-center gap-3 rounded-2xl bg-[#FEF3C7] p-3 sm:p-4">
@@ -201,8 +207,8 @@ function Specification({ row, value }) {
         <DetailIcon name={row.icon} />
       </span>
       <span className="min-w-0">
-        <span className="block text-xs text-slate-600">{row.label}</span>
-        <span className="block break-words text-sm font-extrabold text-[#111111]">{displayValue}</span>
+        <span className="block text-xs text-slate-600">{label ?? row.label}</span>
+        <span className="block break-words text-sm font-extrabold text-[#111111]">{value}</span>
       </span>
     </div>
   )
@@ -225,7 +231,7 @@ export function CategoryDetailPage({ slug }) {
   const selectedImage = galleryState.slug === slug ? galleryState.index : 0
   const imageVisible = galleryState.slug === slug ? galleryState.visible : true
   const touchStartX = useRef(null)
-  const images = category?.images?.length ? category.images : category?.image ? [category.image] : []
+  const images = category?.images ?? []
 
   useEffect(() => {
     const previousTitle = document.title
@@ -240,13 +246,13 @@ export function CategoryDetailPage({ slug }) {
       <div className="min-h-[50vh] bg-[#F7F4EF] px-4 py-20 text-center text-[#111111]">
         <h1 className="text-3xl font-extrabold text-[#111111]">Category not found</h1>
         <a href="/pricelist" className="mt-6 inline-flex rounded-xl bg-[#111111] px-5 py-3 text-sm font-bold text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#111111] focus-visible:ring-offset-2">
-          Back to all categories
+          Back to Pricelist &amp; Fleet
         </a>
       </div>
     )
   }
 
-  const categoryUrl = `/booking?category=${encodeURIComponent(category.slug)}${category.carId ? `&car_id=${category.carId}` : ''}`
+  const categoryUrl = `/booking?category=${encodeURIComponent(category.slug)}${category.carId != null ? `&car_id=${category.carId}` : ''}`
   const displayedOthers = categories.filter((item) => item.slug !== category.slug)
   const selectImage = (index) => {
     if (index === selectedImage || index < 0 || index >= images.length) return
@@ -290,7 +296,7 @@ export function CategoryDetailPage({ slug }) {
             >
               <div className="relative aspect-[16/10] overflow-hidden rounded-2xl bg-[#F7F4EF] p-6">
                 <span className="absolute left-4 top-4 z-10 rounded-full bg-[#111111] px-3 py-1 text-xs font-bold uppercase text-[#FACC15]">
-                  {category.transmission}
+                  {category.type}
                 </span>
                 <MainCategoryImage
                   key={`${category.slug}-${selectedImage}`}
@@ -346,13 +352,26 @@ export function CategoryDetailPage({ slug }) {
                   {category.priceNote}
                 </p>
               )}
+              {category.note && (
+                <p className="mt-5 flex items-start gap-3 rounded-2xl bg-[#FEF3C7] p-5 text-sm leading-relaxed text-[#111111]">
+                  <DetailIcon name="info" size={16} className="mt-0.5" />
+                  <span>{category.note}</span>
+                </p>
+              )}
             </section>
 
             {category.specs && (
               <section className="mt-8">
                 <h2 className="text-xl font-extrabold text-[#111111]">Specifications</h2>
                 <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3">
-                  {specRows.map((row) => <Specification key={row.key} row={row} value={category.specs[row.key]} />)}
+                  {specRows.map((row) => (
+                    <Specification
+                      key={row.key}
+                      row={row}
+                      value={category.specs[row.key]}
+                      label={row.key === 'luggage' ? category.specs.luggageLabel : undefined}
+                    />
+                  ))}
                 </div>
               </section>
             )}
@@ -393,7 +412,7 @@ export function CategoryDetailPage({ slug }) {
               )}
               <span className="inline-flex items-center gap-1.5">
                 <DetailIcon name="settings-2" size={16} />
-                {category.specs?.gear || category.transmission}
+                {category.specs?.gear}
               </span>
             </div>
             <a href={categoryUrl} className="mt-6 inline-flex h-14 w-full items-center justify-center gap-2 rounded-xl bg-[#FACC15] text-base font-extrabold uppercase text-[#111111] shadow-lg transition hover:-translate-y-0.5 hover:bg-[#EAB308] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#111111] focus-visible:ring-offset-2 motion-reduce:transform-none motion-reduce:transition-none">

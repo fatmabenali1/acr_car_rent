@@ -1,0 +1,442 @@
+.rental-conditions-page {
+  --rental-conditions-yellow: #ffc400;
+  --rental-conditions-ink: #111;
+  background: #f7f4ef;
+  color: var(--rental-conditions-ink);
+}
+
+.rental-conditions-page a:focus-visible,
+.rental-conditions-page button:focus-visible {
+  outline: 3px solid var(--rental-conditions-yellow);
+  outline-offset: 3px;
+}
+
+.rental-conditions-hero {
+  background: #0b0b0d;
+  color: #fff;
+}
+
+.rental-conditions-hero-inner,
+.rental-conditions-main {
+  width: min(1000px, calc(100% - 3rem));
+  margin: 0 auto;
+}
+
+.rental-conditions-hero-inner {
+  padding: 1.35rem 0 3.5rem;
+}
+
+.rental-conditions-breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: .65rem;
+  color: rgb(255 255 255 / 58%);
+  font-size: .8rem;
+}
+
+.rental-conditions-breadcrumb a {
+  color: rgb(255 255 255 / 78%);
+  text-decoration: none;
+  transition: color .18s ease;
+}
+
+.rental-conditions-breadcrumb a:hover {
+  color: var(--rental-conditions-yellow);
+}
+
+.rental-conditions-hero-copy {
+  margin-top: 2.4rem;
+  text-align: center;
+}
+
+.rental-conditions-eyebrow {
+  margin: 0 0 .55rem;
+  color: var(--rental-conditions-yellow);
+  font-size: .68rem;
+  font-weight: 800;
+  letter-spacing: .17em;
+}
+
+.rental-conditions-hero h1 {
+  margin: 0;
+  color: #fff;
+  font-size: clamp(2.5rem, 5vw, 4.4rem);
+  font-weight: 800;
+  letter-spacing: -.055em;
+  line-height: 1.08;
+}
+
+.rental-conditions-hero h1 span {
+  color: #fff;
+}
+
+.rental-conditions-hero h1 strong {
+  color: var(--rental-conditions-yellow);
+  font-weight: inherit;
+}
+
+.rental-conditions-hero-copy > p:last-child {
+  margin: .9rem 0 0;
+  color: rgb(255 255 255 / 70%);
+  font-size: 1rem;
+}
+
+.rental-conditions-main {
+  padding: 4rem 0 4.5rem;
+}
+
+.rental-conditions-intro {
+  margin: 0 auto 2rem;
+  color: #4b4b4b;
+  font-size: 1rem;
+  line-height: 1.7;
+  text-align: center;
+}
+
+.rental-terms-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: stretch;
+  gap: 1.5rem;
+}
+
+.rental-terms-card {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  padding: 2rem;
+  border: 1px solid #eee;
+  border-radius: 20px;
+  background: #fff;
+  box-shadow: 0 8px 25px rgb(22 20 15 / 5%);
+  transition: transform .2s ease, border-color .2s ease, box-shadow .2s ease;
+}
+
+.rental-terms-card:hover {
+  transform: translateY(-4px);
+  border-color: var(--rental-conditions-yellow);
+  box-shadow: 0 16px 34px rgb(22 20 15 / 11%);
+}
+
+.rental-terms-card-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.rental-terms-file-icon {
+  display: grid;
+  width: 56px;
+  height: 56px;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--rental-conditions-yellow);
+  color: #111;
+}
+
+.rental-terms-file-icon svg {
+  width: 26px;
+  height: 26px;
+}
+
+.rental-terms-language {
+  display: inline-flex;
+  min-width: 43px;
+  min-height: 30px;
+  align-items: center;
+  justify-content: center;
+  padding: 0 .7rem;
+  border-radius: 999px;
+  background: #111;
+  color: var(--rental-conditions-yellow);
+  font-size: .72rem;
+  font-weight: 800;
+  letter-spacing: .08em;
+}
+
+.rental-terms-card-copy {
+  flex: 1;
+  padding-top: 1.5rem;
+}
+
+.rental-terms-card h2 {
+  margin: 0;
+  font-size: 1.2rem;
+  font-weight: 800;
+  line-height: 1.35;
+}
+
+.rental-terms-subtitle {
+  margin: .45rem 0 0;
+  color: #555;
+  font-size: .9rem;
+  line-height: 1.5;
+}
+
+.rental-terms-format {
+  margin: .8rem 0 0;
+  color: #777;
+  font-size: .88rem;
+}
+
+.rental-terms-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: .75rem;
+  margin-top: 1.8rem;
+}
+
+.rental-terms-button {
+  display: inline-flex;
+  min-height: 48px;
+  align-items: center;
+  justify-content: center;
+  gap: .55rem;
+  padding: .7rem 1rem;
+  border: 1px solid transparent;
+  border-radius: 12px;
+  font-size: .9rem;
+  font-weight: 750;
+  text-align: center;
+  text-decoration: none;
+  transition: transform .18s ease, background .18s ease, color .18s ease;
+}
+
+.rental-terms-button:hover {
+  transform: translateY(-2px);
+}
+
+.rental-terms-button svg {
+  width: 18px;
+  height: 18px;
+  flex: 0 0 auto;
+}
+
+.rental-terms-preview {
+  background: var(--rental-conditions-yellow);
+  color: #111;
+}
+
+.rental-terms-preview:hover {
+  background: #ffd43b;
+}
+
+.rental-terms-download {
+  background: #111;
+  color: #fff;
+}
+
+.rental-terms-download:hover {
+  background: #303030;
+}
+
+.rental-terms-preview-panel {
+  overflow: hidden;
+  margin-top: 2rem;
+  border: 1px solid #e8e5df;
+  border-radius: 18px;
+  background: #fff;
+  box-shadow: 0 8px 25px rgb(22 20 15 / 6%);
+}
+
+.rental-terms-preview-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid #eee;
+}
+
+.rental-terms-preview-header h2 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 750;
+}
+
+.rental-terms-preview-header button {
+  display: inline-flex;
+  align-items: center;
+  gap: .4rem;
+  padding: .5rem .7rem;
+  border: 1px solid #ddd;
+  border-radius: 9px;
+  background: #fff;
+  color: #222;
+  font: inherit;
+  font-size: .85rem;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.rental-terms-preview-header button svg {
+  width: 17px;
+  height: 17px;
+}
+
+.rental-terms-preview-panel iframe {
+  display: block;
+  width: 100%;
+  height: 700px;
+  border: 0;
+  background: #f2f2f2;
+}
+
+.rental-terms-preview-fallback {
+  margin: 0;
+  padding: 2rem;
+  color: #555;
+  font-size: .95rem;
+  text-align: center;
+}
+
+.rental-terms-preview-hint {
+  margin: 0;
+  padding: .8rem 1rem;
+  border-top: 1px solid #eee;
+  color: #666;
+  font-size: .82rem;
+  text-align: center;
+}
+
+.rental-terms-preview-hint a {
+  color: #765d00;
+  font-weight: 700;
+  text-underline-offset: 3px;
+}
+
+.rental-terms-preview-fallback a {
+  color: #765d00;
+  font-weight: 700;
+  text-underline-offset: 3px;
+}
+
+.rental-conditions-help {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+  margin-top: 2rem;
+  padding: 1.5rem 1.75rem;
+  border-radius: 20px;
+  background: #0b0b0d;
+  color: #fff;
+}
+
+.rental-conditions-help-copy {
+  display: flex;
+  align-items: center;
+  gap: .85rem;
+}
+
+.rental-conditions-help-copy svg {
+  width: 25px;
+  height: 25px;
+  flex: 0 0 auto;
+  color: var(--rental-conditions-yellow);
+}
+
+.rental-conditions-help-copy p {
+  margin: 0;
+  font-size: .95rem;
+  line-height: 1.5;
+}
+
+.rental-conditions-help-actions {
+  display: flex;
+  flex: 0 0 auto;
+  gap: .65rem;
+}
+
+.rental-conditions-help-actions a {
+  display: inline-flex;
+  min-height: 42px;
+  align-items: center;
+  justify-content: center;
+  padding: .6rem 1rem;
+  border: 1px solid var(--rental-conditions-yellow);
+  border-radius: 999px;
+  color: var(--rental-conditions-yellow);
+  font-size: .85rem;
+  font-weight: 750;
+  text-decoration: none;
+  transition: background .18s ease, color .18s ease;
+}
+
+.rental-conditions-help-actions a:first-child,
+.rental-conditions-help-actions a:hover {
+  background: var(--rental-conditions-yellow);
+  color: #111;
+}
+
+.rental-conditions-help-actions a:first-child:hover {
+  background: #ffd43b;
+}
+
+@media (max-width: 700px) {
+  .rental-conditions-hero-inner,
+  .rental-conditions-main {
+    width: min(100% - 1.4rem, 1000px);
+  }
+
+  .rental-conditions-hero-inner {
+    padding-top: 1rem;
+    padding-bottom: 2.7rem;
+  }
+
+  .rental-conditions-hero-copy {
+    margin-top: 2rem;
+  }
+
+  .rental-conditions-main {
+    padding: 3rem 0 3.5rem;
+  }
+
+  .rental-terms-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .rental-conditions-help {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .rental-conditions-help-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 440px) {
+  .rental-terms-card {
+    padding: 1.5rem;
+  }
+
+  .rental-terms-actions {
+    grid-template-columns: 1fr;
+  }
+
+  .rental-terms-button {
+    width: 100%;
+  }
+
+  .rental-conditions-help-actions {
+    grid-template-columns: 1fr;
+  }
+
+  .rental-terms-preview-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rental-conditions-page *,
+  .rental-conditions-page *::before,
+  .rental-conditions-page *::after {
+    scroll-behavior: auto !important;
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+  }
+}

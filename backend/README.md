@@ -19,7 +19,7 @@ npm run db:seed
 npm run dev
 ```
 
-The health check is `GET /health`; Swagger UI is available at `/api/docs`.
+`npm run dev` serves the API on port `4000` from TypeScript. To start the compiled server, run `npm start`; its prestart hook rebuilds `dist` first. For the React development server on `http://localhost:5173`, leave `FRONTEND_URL` unset or set it to that origin. The health check is `GET /health`; Swagger UI is available at `/api/docs`.
 
 The local `.env` used during development is ignored by Git. Its current connection settings assume a local PostgreSQL instance on port `5432`, with the default `postgres` user and database `athens_car_rental`. Update `DATABASE_URL` if your PostgreSQL user, host, port, or database name differs. Never commit or share `.env`.
 
@@ -67,3 +67,22 @@ The first administrator is created by `npm run db:seed` only when both `ADMIN_EM
 The admin quote `send-quote` action transitions to `QUOTE_SENT` and queues a bilingual `quote_offer` in the email outbox. The quote offer and deposit-paid customer/agency notifications include localized text and HTML bodies; delivery uses the existing retryable outbox. Configure `AGENCY_PHONE`, `AGENCY_SECONDARY_PHONE` and `AGENCY_EMAIL` for contact details and internal notifications. With SMTP unset, messages remain queued rather than being sent.
 
 Availability uses the `Vehicle.availableUnits` count, confirmed quote quantities, overlapping manual blocks, and half-open date ranges (`pickupAt < requestedDropoff` and `returnAt > requestedPickup`). `DEPOSIT_PENDING` quotes are not counted by default; `rental-policy.availabilityCountDepositPending` can enable them. The default response hides exact inventory (`availabilityStockVisibility: "LEVEL"`); set it to `"EXACT"` for `remainingUnits`. `availabilityLowStockThreshold` controls the low-stock level (seed default: 2). Category stock starts at zero and must be set by an administrator; no vehicle counts or prices are invented. The optional `pickupLocationId` and `returnLocationId` let availability checks return the short-rental location and operating-hours warnings.
+
+## Reservation-to-payment demo flow
+
+The site now uses these additional endpoints under `/api`:
+
+| Method | URL | Request / response |
+|---|---|---|
+| `POST` | `/api/reservations` | Requires `carId`, pickup/return locations and ISO date-times, driver age/licence tenure, customer name/e-mail/phone/country, `privacyAccepted: true`, and optional coupon/notes/`language` (`en` or `el`). `website` is the empty honeypot. Any submitted `amount` is ignored. Returns `{ reservationNumber, total, deposit, currency, emailSent, demoPrices }`. |
+| `GET` | `/api/reservations/:ref/payment-info` | Returns only first/last name, e-mail, country, mobile, reservation reference, delivery date, notes and the server-calculated deposit. Unknown references return a generic 404. |
+
+`POST /api/reservations` validates and stores the reservation as `DEPOSIT_PENDING` (shown to customers as `pending_payment`), calculates amounts on the server, then sends one customer and one agency email (including the customer's notes in the agency message). If SMTP fails, the stored reservation is retained; each message is retried up to three times and the API returns `emailSent: false`. In development/test with SMTP unset, Nodemailer's JSON transport sends nothing externally and the API reports `emailSent: false`; configure SMTP before expecting actual email delivery. The agency mailbox defaults to the site's published `info@athenscarrental.com`, and can be overridden with `MAIL_AGENCY_TO` (or `MAIL_TO_AGENCY`). The existing `/api/bookings`, `/api/v1/quotes`, payment-provider routes and hosted-checkout behavior remain available.
+
+The unique temporary-rate table is `src/config/vehiclePricing.js`. It currently contains placeholder daily rates for D1, E, E1, E2, E3, D3, G, G1, G2 and F (VAT included). The pure `computeQuote` helper applies the three-hour grace rule and rounds `max(DEPOSIT_MIN, total * DEPOSIT_PERCENT)` up to a whole euro. These values are explicitly not approved customer rates. Keep `PRICING_CONFIRMED=false` until the agency replaces and approves every rate; the API warns at startup and the site displays “Demo prices”. `FRONTEND_URL` is the allowed CORS origin and payment-link base (it falls back to `APP_URL` for existing deployments). SMTP settings are `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS` (or `SMTP_PASSWORD`), `MAIL_FROM`, and `MAIL_AGENCY_TO` (or `MAIL_TO_AGENCY`).
+
+Run unit tests with `npm test`. Database integration tests require `RUN_DATABASE_TESTS=true`, a separate local test database in `DATABASE_URL`, and a fresh `npm run db:migrate -- --skip-seed` followed by `npm run db:seed`; never point integration tests at production data. Frontend component tests run with `npm test` in `frontend/mon-projet-react`.
+
+Reservation data is retained only while needed to handle the request, payment and applicable legal/accounting obligations. Before production, the agency must set and implement a documented retention/deletion schedule and exercise it against old reservations and email records.
+
+The current site payment flow is still the existing provider-hosted Stripe Checkout flow; the API's Alpha Bank provider remains an explicit stub. Do not collect card data in this application. Confirm Alpha Bank's approved amount/reference handoff and test environment before enabling it.

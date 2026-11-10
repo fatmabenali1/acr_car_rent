@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { getCheckoutLocations } from '../api/checkout'
 
 function formatLocalDate(date) {
   const year = date.getFullYear()
@@ -33,6 +34,7 @@ function getBookingDefaults() {
     driverAge: params.get('driverAge') || '30',
     coupon: params.get('coupon') || '',
     category: params.get('category') || '',
+    source: params.get('source') || '',
   }
 }
 
@@ -206,6 +208,22 @@ function StepHeading({ number, children }) {
 export function BookingPage() {
   const [form, setForm] = useState(getBookingDefaults)
   const [errors, setErrors] = useState({})
+  const [locationOptions, setLocationOptions] = useState([])
+  const [locationLookupError, setLocationLookupError] = useState('')
+
+  useEffect(() => {
+    let active = true
+    getCheckoutLocations()
+      .then((locations) => {
+        if (active) setLocationOptions(locations.map((location) => location.name))
+      })
+      .catch((error) => {
+        if (active) setLocationLookupError(error.message)
+      })
+    return () => {
+      active = false
+    }
+  }, [])
 
   useEffect(() => {
     const previousTitle = document.title
@@ -233,7 +251,7 @@ export function BookingPage() {
     if (form.pickupDate && form.returnDate && returnAt <= pickupAt) {
       nextErrors.returnDate = 'Drop-off must be after pick-up.'
     }
-    if (!Number.isInteger(age) || age < 18) nextErrors.driverAge = 'Driver must be at least 18.'
+    if (!Number.isInteger(age) || age < 23 || age > 75) nextErrors.driverAge = 'Driver age must meet the category minimum and be no more than 75.'
     if (form.useDifferentDropoff && !form.dropoffLocation.trim()) {
       nextErrors.dropoffLocation = 'Enter a drop-off location.'
     }
@@ -249,10 +267,11 @@ export function BookingPage() {
       returnTime: form.returnTime,
       driverAge: String(age),
       ...(form.category ? { category: form.category } : {}),
+      ...(form.source ? { source: form.source } : {}),
       ...(form.useDifferentDropoff ? { returnLocation: form.dropoffLocation.trim() } : {}),
       ...(form.coupon.trim() ? { coupon: form.coupon.trim() } : {}),
     })
-    window.location.assign(`/search?${params.toString()}`)
+    window.location.assign(`/quote?${params.toString()}`)
   }
 
   return (
@@ -270,6 +289,11 @@ export function BookingPage() {
           <p className="mt-2 mb-2 max-w-3xl text-sm text-white/80 sm:text-base">
             Choose your dates and find the best rate for your rental in Greece.
           </p>
+          {form.source === 'early-bird' && (
+            <p className="mt-3 inline-flex rounded-full bg-[#FACC15] px-4 py-1.5 text-xs font-bold uppercase tracking-wide text-[#111111]">
+              Early bird request
+            </p>
+          )}
         </div>
       </section>
 
@@ -300,8 +324,13 @@ export function BookingPage() {
                     onChange={(event) => updateField('pickupLocation', event.target.value)}
                     placeholder="Enter an airport, city or address"
                     className={fieldClassName}
+                    list="booking-location-options"
                   />
+                  <datalist id="booking-location-options">
+                    {locationOptions.map((location) => <option key={location} value={location} />)}
+                  </datalist>
                 </BookingField>
+                {locationLookupError && <p className="mt-1 text-xs text-red-600" role="status">{locationLookupError}</p>}
                 <label className="mt-3 flex flex-row items-center justify-start gap-2 text-sm text-slate-600">
                   <input
                     type="checkbox"
@@ -325,6 +354,7 @@ export function BookingPage() {
                       onChange={(event) => updateField('dropoffLocation', event.target.value)}
                       placeholder="Enter an airport, city or address"
                       className={fieldClassName}
+                      list="booking-location-options"
                     />
                   </BookingField>
                 </div>
@@ -370,7 +400,7 @@ export function BookingPage() {
                 <StepHeading number="3"><span id="booking-step-driver">Driver</span></StepHeading>
                 <div className="grid gap-4 sm:grid-cols-2">
                   <BookingField id="booking-driver-age" label="Driver's age" icon="user" error={errors.driverAge}>
-                    <input id="booking-driver-age" name="driverAge" type="number" min="18" required value={form.driverAge} onChange={(event) => updateField('driverAge', event.target.value)} className={fieldClassName} />
+                    <input id="booking-driver-age" name="driverAge" type="number" min="23" max="75" required value={form.driverAge} onChange={(event) => updateField('driverAge', event.target.value)} className={fieldClassName} />
                   </BookingField>
                   <BookingField id="booking-coupon" label="Coupon (optional)" icon="ticket-percent">
                     <input id="booking-coupon" name="coupon" type="text" value={form.coupon} onChange={(event) => updateField('coupon', event.target.value)} className={fieldClassName} />

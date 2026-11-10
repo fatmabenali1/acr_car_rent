@@ -233,7 +233,11 @@ async function applyCallback(callback: VerifiedPaymentCallback) {
   const result = await prisma.$transaction(async (transaction) => {
     const update = await transaction.payment.updateMany({
       where: { id: payment.id, status: PaymentStatus.INITIATED },
-      data: { status, providerResponse: callback.safeResponse },
+      data: {
+        status,
+        paidAt: status === PaymentStatus.PAID ? new Date() : undefined,
+        providerResponse: callback.safeResponse,
+      },
     });
     if (update.count === 1 && status === PaymentStatus.PAID) {
       await transaction.quote.updateMany({
@@ -253,7 +257,13 @@ async function applyCallback(callback: VerifiedPaymentCallback) {
           language: true,
           quotedTotalEur: true,
           pickupAt: true,
+          returnAt: true,
+          pickupLocationLabel: true,
+          returnLocationLabel: true,
+          categorySlug: true,
           pickupLocation: { select: { name: true } },
+          returnLocation: { select: { name: true } },
+          vehicles: { include: { vehicle: { select: { code: true } } } },
         },
       });
       if (!quote) throw new AppError(404, "QUOTE_NOT_FOUND", "Quote for payment not found");
@@ -266,7 +276,9 @@ async function applyCallback(callback: VerifiedPaymentCallback) {
         ? quote.quotedTotalEur.minus(totalPaid)
         : new Prisma.Decimal(0);
       const language = quote.language === "el" ? "el" : "en";
-      const pickupLocation = localizedJsonString(quote.pickupLocation.name, language);
+      const pickupLocation = quote.pickupLocationLabel ?? localizedJsonString(quote.pickupLocation.name, language);
+      const returnLocation = quote.returnLocationLabel ?? localizedJsonString(quote.returnLocation.name, language);
+      const category = quote.vehicles.map(({ vehicle }) => vehicle.code).join(", ") || quote.categorySlug || "—";
       const customerPayload = {
         reference: quote.reference,
         customerFirstName: quote.customerFirstName,
@@ -275,6 +287,9 @@ async function applyCallback(callback: VerifiedPaymentCallback) {
         balanceRemainingEur: balanceRemaining.toFixed(2),
         pickupAt: quote.pickupAt.toISOString(),
         pickupLocation,
+        returnAt: quote.returnAt.toISOString(),
+        returnLocation,
+        category,
         agencyPhones: [env.AGENCY_PHONE, env.AGENCY_SECONDARY_PHONE],
       };
       const internalPayload = {
@@ -285,6 +300,10 @@ async function applyCallback(callback: VerifiedPaymentCallback) {
         totalPaidEur: totalPaid.toFixed(2),
         balanceRemainingEur: balanceRemaining.toFixed(2),
         pickupAt: quote.pickupAt.toISOString(),
+        pickupLocation,
+        returnAt: quote.returnAt.toISOString(),
+        returnLocation,
+        category,
       };
       await transaction.emailOutbox.createMany({
         data: [

@@ -1,30 +1,32 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
-import { getHome } from './api/home'
+import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react'
 import { getVehicleGroups, getVehicles } from './api/vehicles'
 import { getLocations } from './api/locations'
 import { getExtras } from './api/extras'
-import { getFaq } from './api/faq'
-import { getOffers } from './api/offers'
-import { getReviews } from './api/reviews'
-import { getRentalInfo } from './api/rentalInfo'
-import { getContactInfo } from './api/contact'
 import { getPageBySlug } from './api/pages'
 import { checkAvailability } from './api/availability'
 import { getPricingEstimate } from './api/pricing'
-import { createQuote } from './api/quotes'
-import { initPayment, getPaymentStatus } from './api/payments'
+import { createBooking } from './api/checkout'
 import { getCookieConsent, saveCookieConsent } from './api/cookie-consent'
 import { HomePage } from './pages/HomePage'
 import { FleetPages } from './pages/FleetPages'
 import { QuotePages } from './pages/QuotePages'
-import { PaymentPages } from './pages/PaymentPages'
+import { SecurePaymentPage } from './pages/SecurePaymentPage'
 import { StaticPages } from './pages/StaticPages'
-import { BookingPage } from './pages/BookingPage'
 import { PricelistPage } from './pages/PricelistPage'
 import { CategoryDetailPage } from './pages/CategoryDetailPage'
+import { VehicleGroupPage } from './pages/VehicleGroupPage'
 import { FaqPage } from './pages/FaqPage'
 import { ContactPage } from './pages/ContactPage'
+import { CargoVansPage } from './pages/CargoVansPage'
+import { TripadvisorPage } from './pages/TripadvisorPage'
+import { CustomerReviewsPage } from './pages/CustomerReviewsPage'
+import { RentalConditionsPage } from './pages/RentalConditionsPage'
+import { EarlyBirdPage } from './pages/EarlyBirdPage'
+import { AboutPage } from './pages/AboutPage'
 import './App.css'
+
+const LocationsPage = lazy(() => import('./pages/LocationsPage').then((module) => ({ default: module.LocationsPage })))
+const LocationDetailPage = lazy(() => import('./pages/LocationDetailPage').then((module) => ({ default: module.LocationDetailPage })))
 
 const FALLBACK_IMAGE = 'https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?auto=format&fit=crop&w=1200&q=80'
 
@@ -39,12 +41,44 @@ const navItems = [
   { key: 'contact', label: { en: 'Contact us', el: 'Επικοινωνία' } },
 ]
 
-function resolveRoute(pathname = window.location.pathname) {
+function resolveRoute(pathname = window.location.pathname, search = window.location.search) {
   const path = pathname.replace(/\/+$/, '') || '/'
   const detailMatch = path.match(/^\/fleet\/([^/]+)$/)
+  const locationDetailMatch = path.match(/^\/locations\/([^/]+)$/)
+  const vehicleGroupMatch = path.match(/^\/vehicles\/([^/]+)$/)
+  const legacyGroupSlugs = {
+    luxury: 'luxury-cars',
+    minibus: 'mini-vans',
+    suv: 'suvs',
+  }
+  const searchParams = new URLSearchParams(search)
+  const legacyGroupSlug = path === '/fleet'
+    ? legacyGroupSlugs[searchParams.get('category')]
+    : null
+
+  if (legacyGroupSlug) {
+    searchParams.delete('category')
+    const remainingSearch = searchParams.toString()
+    return {
+      page: 'vehicle-group',
+      slug: legacyGroupSlug,
+      redirectTo: `/vehicles/${legacyGroupSlug}${remainingSearch ? `?${remainingSearch}` : ''}`,
+    }
+  }
+  if (vehicleGroupMatch) return { page: 'vehicle-group', slug: decodeURIComponent(vehicleGroupMatch[1]) }
 
   if (path === '/faq') return { page: 'faq', slug: '' }
   if (path === '/contact') return { page: 'contact', slug: '' }
+  if (path === '/cargo-vans') return { page: 'cargo-vans', slug: '' }
+  if (path === '/tripadvisor') return { page: 'tripadvisor', slug: '' }
+  if (path === '/customer-reviews') return { page: 'customer-reviews', slug: '' }
+  if (path === '/about') return { page: 'about', slug: '' }
+  if (path === '/early-bird') return { page: 'early-bird', slug: '' }
+  if (locationDetailMatch) return { page: 'location-detail', slug: decodeURIComponent(locationDetailMatch[1]) }
+  if (path === '/locations') return { page: 'locations', slug: '' }
+  if (path === '/quote') return { page: 'quote', slug: '' }
+  if (path === '/pay/success') return { page: 'payment-success', slug: '' }
+  if (path === '/pay/cancel') return { page: 'payment-cancel', slug: '' }
   if (path === '/pay') return { page: 'payment', slug: '' }
   if (path === '/rental-conditions') return { page: 'static', slug: '' }
   if (path === '/booking') return { page: 'booking', slug: '' }
@@ -55,26 +89,28 @@ function resolveRoute(pathname = window.location.pathname) {
 }
 
 function App() {
+  const [initialRoute] = useState(() => {
+    const route = resolveRoute()
+    if (route.redirectTo) window.history.replaceState(window.history.state, '', route.redirectTo)
+    return route
+  })
   const [lang, setLang] = useState('en')
-  const [activePage, setActivePage] = useState(() => resolveRoute().page)
-  const [categorySlug, setCategorySlug] = useState(() => resolveRoute().slug)
+  const [activePage, setActivePage] = useState(initialRoute.page)
+  const [categorySlug, setCategorySlug] = useState(initialRoute.slug)
   const [menuOpen, setMenuOpen] = useState(false)
   const [infoMenuOpen, setInfoMenuOpen] = useState(false)
   const infoMenuRef = useRef(null)
   const mobileInfoMenuRef = useRef(null)
   const infoMenuButtonRef = useRef(null)
   const mobileInfoMenuButtonRef = useRef(null)
+  const cookieDialogRef = useRef(null)
+  const cookieFocusReturnRef = useRef(null)
+  const cookieCustomizeTriggerRef = useRef(null)
   const [scrolled, setScrolled] = useState(false)
-  const [homeData, setHomeData] = useState({ slides: [], banners: [], arguments: [] })
-  const [offers, setOffers] = useState([])
-  const [reviews, setReviews] = useState([])
   const [groups, setGroups] = useState([])
   const [vehicles, setVehicles] = useState([])
   const [locations, setLocations] = useState([])
   const [extras, setExtras] = useState([])
-  const [faq, setFaq] = useState([])
-  const [rentalInfo, setRentalInfo] = useState({})
-  const [contactInfo, setContactInfo] = useState({})
   const [staticPage, setStaticPage] = useState(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -82,10 +118,14 @@ function App() {
   const [cookieConsentLoaded, setCookieConsentLoaded] = useState(false)
   const [cookieConsentSaving, setCookieConsentSaving] = useState(false)
   const [cookieConsentError, setCookieConsentError] = useState('')
+  const [cookieDialogOpen, setCookieDialogOpen] = useState(false)
+  const [cookieCustomizing, setCookieCustomizing] = useState(false)
+  const [reservationNotice, setReservationNotice] = useState(null)
 
   useEffect(() => {
     const handlePopState = () => {
       const route = resolveRoute()
+      if (route.redirectTo) window.history.replaceState(window.history.state, '', route.redirectTo)
       setActivePage(route.page)
       setCategorySlug(route.slug)
       setInfoMenuOpen(false)
@@ -95,6 +135,10 @@ function App() {
     window.addEventListener('popstate', handlePopState)
     return () => window.removeEventListener('popstate', handlePopState)
   }, [])
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'instant' })
+  }, [activePage, categorySlug])
 
   useEffect(() => {
     if (!infoMenuOpen) return undefined
@@ -127,10 +171,18 @@ function App() {
 
     getCookieConsent()
       .then(({ data }) => {
-        if (active) setCookieConsent(data?.choice || null)
+        if (active) {
+          const choice = data?.choice || null
+          setCookieConsent(choice)
+          setCookieDialogOpen(!choice)
+          setCookieConsentError('')
+        }
       })
-      .catch((requestError) => {
-        if (active) setCookieConsentError(requestError.message || 'Unable to load cookie preferences.')
+      .catch(() => {
+        if (active) {
+          setCookieConsentError('Cookie preferences could not be loaded. Please review your settings.')
+          setCookieDialogOpen(true)
+        }
       })
       .finally(() => {
         if (active) setCookieConsentLoaded(true)
@@ -141,14 +193,82 @@ function App() {
     }
   }, [])
 
+  useEffect(() => {
+    if (!cookieDialogOpen) return undefined
+
+    const focusableSelector = 'button:not([disabled]), a[href], input:not([disabled]), [tabindex]:not([tabindex="-1"])'
+    const focusableElements = () => Array.from(
+      cookieDialogRef.current?.querySelectorAll(focusableSelector) ?? [],
+    )
+    const focusFrame = window.requestAnimationFrame(() => {
+      const customizeTrigger = cookieCustomizeTriggerRef.current
+      if (!cookieCustomizing && customizeTrigger?.isConnected) customizeTrigger.focus()
+      else focusableElements()[0]?.focus()
+    })
+    const handleCookieDialogKeyDown = (event) => {
+      if (event.key === 'Escape') {
+        event.preventDefault()
+        if (cookieCustomizing) {
+          if (cookieFocusReturnRef.current) {
+            closeCookieDialog()
+          } else {
+            setCookieCustomizing(false)
+          }
+        } else {
+          setCookieDialogOpen(false)
+          const trigger = cookieFocusReturnRef.current
+          if (trigger?.isConnected) window.requestAnimationFrame(() => trigger.focus())
+        }
+        return
+      }
+      if (event.key !== 'Tab') return
+
+      const elements = focusableElements()
+      if (!elements.length) return
+      const first = elements[0]
+      const last = elements[elements.length - 1]
+      if (event.shiftKey && (document.activeElement === first || !cookieDialogRef.current?.contains(document.activeElement))) {
+        event.preventDefault()
+        last.focus()
+      } else if (!event.shiftKey && (document.activeElement === last || !cookieDialogRef.current?.contains(document.activeElement))) {
+        event.preventDefault()
+        first.focus()
+      }
+    }
+
+    document.addEventListener('keydown', handleCookieDialogKeyDown)
+    return () => {
+      window.cancelAnimationFrame(focusFrame)
+      document.removeEventListener('keydown', handleCookieDialogKeyDown)
+    }
+  }, [cookieDialogOpen, cookieCustomizing])
+
+  const closeCookieDialog = () => {
+    setCookieDialogOpen(false)
+    setCookieCustomizing(false)
+    const trigger = cookieFocusReturnRef.current
+    cookieFocusReturnRef.current = null
+    if (trigger?.isConnected) window.requestAnimationFrame(() => trigger.focus())
+  }
+
+  const openCookieSettings = (event) => {
+    event.preventDefault()
+    cookieFocusReturnRef.current = event.currentTarget
+    setCookieConsentError('')
+    setCookieCustomizing(true)
+    setCookieDialogOpen(true)
+  }
+
   const handleCookieChoice = async (choice) => {
     setCookieConsentSaving(true)
     setCookieConsentError('')
     try {
       const { data } = await saveCookieConsent(choice)
       setCookieConsent(data.choice)
-    } catch (requestError) {
-      setCookieConsentError(requestError.message || 'Unable to save cookie preferences. Please try again.')
+      closeCookieDialog()
+    } catch {
+      setCookieConsentError('We could not save your cookie choice. No preferences were changed. Please try again from Cookie settings.')
+      closeCookieDialog()
     } finally {
       setCookieConsentSaving(false)
     }
@@ -174,36 +294,13 @@ function App() {
   }, [lang])
 
   useEffect(() => {
-    async function loadHome() {
-      try {
-        setLoading(true)
-        setError('')
-        const [homeResponse, offersResponse, reviewsResponse] = await Promise.all([
-          getHome(lang),
-          getOffers(lang),
-          getReviews({ limit: 6 }, lang),
-        ])
-        setHomeData(homeResponse.data || { slides: [], banners: [], arguments: [] })
-        setOffers(offersResponse.data || [])
-        setReviews(reviewsResponse.data || [])
-      } catch (err) {
-        setError(err.message || 'Unable to load home content.')
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    if (activePage === 'home') loadHome()
-  }, [activePage, lang])
-
-  useEffect(() => {
     async function loadFleet() {
       try {
         setLoading(true)
         setError('')
         const [groupsResponse, vehiclesResponse, locationsResponse, extrasResponse] = await Promise.all([
           getVehicleGroups(lang),
-          getVehicles({ page: 1, limit: 12 }, lang),
+          getVehicles({ page: 1, limit: 100 }, lang),
           getLocations(lang),
           getExtras(lang),
         ])
@@ -218,32 +315,7 @@ function App() {
       }
     }
 
-    if (activePage === 'fleet') loadFleet()
-  }, [activePage, lang])
-
-  useEffect(() => {
-    async function loadStatic() {
-      try {
-        setLoading(true)
-        setError('')
-        const [faqResponse, rentalResponse, contactResponse] = await Promise.all([
-          getFaq(lang),
-          getRentalInfo(lang),
-          getContactInfo(lang),
-        ])
-        setFaq(faqResponse.data || [])
-        setRentalInfo(rentalResponse.data || {})
-        setContactInfo(contactResponse.data || {})
-      } catch (err) {
-        setError(err.message || 'Unable to load information pages.')
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    if (activePage === 'static' || activePage === 'locations') {
-      loadStatic()
-    }
+    if (activePage === 'fleet' || activePage === 'quote' || activePage === 'booking') loadFleet()
   }, [activePage, lang])
 
   useEffect(() => {
@@ -270,8 +342,8 @@ function App() {
   )
 
   const renderPage = () => {
-    if (activePage === 'booking') {
-      return <BookingPage />
+    if (activePage === 'static') {
+      return <RentalConditionsPage />
     }
 
     if (activePage === 'pricelist') {
@@ -282,6 +354,10 @@ function App() {
       return <CategoryDetailPage slug={categorySlug} />
     }
 
+    if (activePage === 'vehicle-group') {
+      return <VehicleGroupPage slug={categorySlug} />
+    }
+
     if (activePage === 'faq') {
       return <FaqPage />
     }
@@ -290,17 +366,54 @@ function App() {
       return <ContactPage />
     }
 
+    if (activePage === 'cargo-vans') {
+      return <CargoVansPage />
+    }
+
+    if (activePage === 'tripadvisor') {
+      return <TripadvisorPage />
+    }
+
+    if (activePage === 'customer-reviews') {
+      return <CustomerReviewsPage />
+    }
+
+    if (activePage === 'early-bird') {
+      return <EarlyBirdPage />
+    }
+
+    if (activePage === 'about') {
+      return <AboutPage />
+    }
+
+    if (activePage === 'locations') {
+      return (
+        <Suspense fallback={<div className="api-banner api-loading">Loading locations…</div>}>
+          <LocationsPage
+            onRequestQuote={() => onNavClick('quote')}
+            onLocationNavigate={navigateToLocation}
+          />
+        </Suspense>
+      )
+    }
+
+    if (activePage === 'location-detail') {
+      return (
+        <Suspense fallback={<div className="api-banner api-loading">Loading location…</div>}>
+          <LocationDetailPage
+            slug={categorySlug}
+            onLocationNavigate={navigateToLocation}
+            onBackToLocations={() => onNavClick('locations')}
+            onRequestQuote={() => onNavClick('quote')}
+            onContactUs={() => onNavClick('contact')}
+          />
+        </Suspense>
+      )
+    }
+
     if (activePage === 'home') {
       return (
-        <HomePage
-          lang={lang}
-          data={homeData}
-          offers={offers}
-          reviews={reviews}
-          loading={loading}
-          error={error}
-          fallbackImage={FALLBACK_IMAGE}
-        />
+        <HomePage />
       )
     }
 
@@ -317,7 +430,7 @@ function App() {
       )
     }
 
-    if (activePage === 'quote') {
+    if (activePage === 'quote' || activePage === 'booking') {
       return (
         <QuotePages
           lang={lang}
@@ -327,30 +440,26 @@ function App() {
           loading={loading}
           error={error}
           fallbackImage={FALLBACK_IMAGE}
-          api={{ checkAvailability, getPricingEstimate, createQuote }}
+          api={{ checkAvailability, getPricingEstimate, createBooking }}
+          onReservationCreated={(reservation) => {
+            window.history.pushState({}, '', `/pay?ref=${encodeURIComponent(reservation.reference)}`)
+            setReservationNotice(reservation)
+            setCategorySlug('')
+            setActivePage('payment')
+          }}
         />
       )
     }
 
-    if (activePage === 'payment') {
+    if (['payment', 'payment-success', 'payment-cancel'].includes(activePage)) {
       return (
-        <PaymentPages
-          lang={lang}
-          locations={locations}
-          loading={loading}
-          error={error}
-          fallbackImage={FALLBACK_IMAGE}
-          api={{ initPayment, getPaymentStatus }}
-        />
+        <SecurePaymentPage route={activePage} reservationNotice={reservationNotice} />
       )
     }
 
     return (
       <StaticPages
         lang={lang}
-        faq={faq}
-        rentalInfo={rentalInfo}
-        contactInfo={contactInfo}
         staticPage={staticPage}
         setStaticPage={setStaticPage}
         loading={loading}
@@ -366,6 +475,12 @@ function App() {
       static: '/rental-conditions',
       faq: '/faq',
       contact: '/contact',
+      'cargo-vans': '/cargo-vans',
+      tripadvisor: '/tripadvisor',
+      'customer-reviews': '/customer-reviews',
+      about: '/about',
+      locations: '/locations',
+      quote: '/quote',
       payment: '/pay',
     }
     const routePath = routePaths[key]
@@ -378,10 +493,20 @@ function App() {
     setInfoMenuOpen(false)
   }
 
+  const navigateToLocation = (location) => {
+    const routePath = `/locations/${location.slug}`
+    if (window.location.pathname !== routePath) window.history.pushState({}, '', routePath)
+    setActivePage('location-detail')
+    setCategorySlug(location.slug)
+    setMenuOpen(false)
+    setInfoMenuOpen(false)
+  }
+
   const infoItems = [
     { key: 'static', href: '/rental-conditions', label: { en: 'Rental conditions', el: 'Όροι ενοικίασης' } },
     { key: 'faq', href: '/faq', label: { en: 'FAQ', el: 'Συχνές ερωτήσεις' } },
     { key: 'payment', href: '/pay', label: { en: 'Secure payment', el: 'Ασφαλής πληρωμή' } },
+    { key: 'customer-reviews', href: '/customer-reviews', label: { en: 'Customer Reviews', el: 'Κριτικές πελατών' } },
   ]
 
   const handleInfoLinkClick = (event, key) => {
@@ -391,7 +516,7 @@ function App() {
   }
 
   return (
-    <div className="bg-[#f7f4ef] text-slate-800 antialiased">
+    <div className={`bg-[#f7f4ef] text-slate-800 antialiased ${activePage === 'payment' ? 'payment-route-shell' : ''}`}>
       <div className="bg-[#0b0b0d] text-white text-sm">
         <div className="mx-auto w-full max-w-[1760px] px-4 sm:px-6 lg:px-10 2xl:px-16">
           <div className="flex h-10 items-center justify-between">
@@ -478,7 +603,7 @@ function App() {
               <img
                 src="/images/acr-logo.png"
                 alt="Athens Car Rental logo"
-                className="h-11 w-auto object-contain"
+                className="h-14 w-auto object-contain"
                 onError={(event) => {
                   event.currentTarget.src = '/images/logo.svg';
                 }}
@@ -698,7 +823,7 @@ function App() {
             <h4>General information</h4>
             <ul>
               <li>Privacy policy</li>
-              <li>Cookies</li>
+              <li><a href="#cookie-settings" onClick={openCookieSettings}>Cookie settings</a></li>
               <li>Travel guide</li>
             </ul>
           </div>
@@ -707,13 +832,14 @@ function App() {
             <ul>
               <li>Standard cars</li>
               <li>Mini Van Automatic</li>
-              <li>Mini Vans</li>
-              <li>SUVs</li>
-              <li>Luxury cars</li>
+              <li><a href="/vehicles/mini-vans">Mini Vans</a></li>
+              <li><a href="/vehicles/suvs">SUVs</a></li>
+              <li><a href="/vehicles/luxury-cars">Luxury cars</a></li>
             </ul>
           </div>
           <div>
             <h4>Secure payment</h4>
+            <p><a href="/pay">Secure payment</a></p>
             <p>SSL secured • Greek Tourism Organisation</p>
             <p>Google Privacy Policy • Terms</p>
           </div>
@@ -724,17 +850,51 @@ function App() {
         </div>
       </footer>
 
-      {cookieConsentLoaded && !cookieConsent && (
-        <div className="cookie-banner z-40" role="dialog" aria-live="polite" aria-label="Cookie notice">
+      {cookieConsentError && !cookieDialogOpen && <p className="cookie-consent-error" role="alert">{cookieConsentError}</p>}
+
+      {cookieConsentLoaded && cookieDialogOpen && (
+        <div
+          className={`cookie-banner z-40${cookieCustomizing ? ' cookie-banner--customizing' : ''}`}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="cookie-dialog-title"
+          ref={cookieDialogRef}
+        >
           <div className="cookie-banner__text">
-            <strong>Cookies</strong>
-            <p>We use cookies to improve your browsing experience and provide a smoother reservation flow.</p>
-            {cookieConsentError && <p role="alert">{cookieConsentError}</p>}
+            <strong id="cookie-dialog-title">{cookieCustomizing ? 'Cookie settings' : 'Cookie notice'}</strong>
+            <p>
+              {cookieCustomizing
+                ? 'This site currently uses only strictly necessary cookies. It does not use analytics or advertising cookies.'
+                : 'We use strictly necessary cookies to provide and remember your cookie choice.'}
+            </p>
+            {cookieCustomizing && (
+              <div className="cookie-categories">
+                <p><strong>Current choice:</strong> {cookieConsent || 'Not set'}</p>
+                <label>
+                  <input type="checkbox" checked readOnly disabled />
+                  <span><strong>Strictly necessary</strong><br />Required for the site and consent preference to work. Always active.</span>
+                </label>
+              </div>
+            )}
           </div>
-          <div className="cookie-actions">
-            <button type="button" disabled={cookieConsentSaving} onClick={() => handleCookieChoice('accepted')}>Accept</button>
-            <button type="button" disabled={cookieConsentSaving} onClick={() => handleCookieChoice('refused')}>Refuse</button>
-            <button type="button" disabled={cookieConsentSaving} onClick={() => handleCookieChoice('customized')}>Customize</button>
+          <div className={`cookie-actions${cookieCustomizing ? ' cookie-actions--equal' : ''}`}>
+            <button type="button" disabled={cookieConsentSaving} onClick={() => handleCookieChoice('accepted')}>Accept all</button>
+            <button type="button" disabled={cookieConsentSaving} onClick={() => handleCookieChoice('refused')}>Refuse all</button>
+            <button
+              type="button"
+              disabled={cookieConsentSaving}
+              ref={cookieCustomizeTriggerRef}
+              onClick={(event) => {
+                if (cookieCustomizing) {
+                  void handleCookieChoice('customized')
+                } else {
+                  cookieCustomizeTriggerRef.current = event.currentTarget
+                  setCookieCustomizing(true)
+                }
+              }}
+            >
+              {cookieCustomizing ? 'Save my choices' : 'Customize'}
+            </button>
           </div>
         </div>
       )}

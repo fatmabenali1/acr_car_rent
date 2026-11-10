@@ -1,9 +1,9 @@
 import './ContactPage.css'
 
-const mapEmbedUrl = 'https://www.google.com/maps?q=37.9010973,23.9004058(Athens+Car+Rental+-+ACR)&z=17&output=embed'
+const mapEmbedUrl = 'https://www.google.com/maps?q=37.9010973,23.9004058(Athens+Car+Rental+-+ACR)&z=17&output=embed&hl=en'
 const mapSearchUrl = 'https://www.google.com/maps/search/?api=1&query=37.9010973,23.9004058'
 
-function ContactIcon({ name }) {
+export function ContactIcon({ name }) {
   const paths = {
     address: <><path d="M20 10c0 5-8 12-8 12S4 15 4 10a8 8 0 1 1 16 0Z" /><circle cx="12" cy="10" r="2.5" /></>,
     phone: <path d="M22 16.92v3a2 2 0 0 1-2.18 2A19.86 19.86 0 0 1 3.08 4.18 2 2 0 0 1 5.06 2h3a2 2 0 0 1 2 1.72l.43 2.68a2 2 0 0 1-1.26 2.15l-1.29.48a16 16 0 0 0 8.8 8.8l.48-1.29a2 2 0 0 1 2.15-1.26l2.68.43A2 2 0 0 1 22 16.92Z" />,
@@ -13,31 +13,61 @@ function ContactIcon({ name }) {
   }
 
   return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5 shrink-0" aria-hidden="true">
       {paths[name]}
     </svg>
+  )
+}
+
+export function ContactHero({ breadcrumb, eyebrow, title, highlight, suffix = '', subtitle }) {
+  return (
+    <section className="contact-hero">
+      <div className="contact-hero-inner">
+        <nav className="contact-breadcrumb" aria-label="Breadcrumb">
+          <a href="/" className="rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FACC15] focus-visible:ring-offset-2 focus-visible:ring-offset-[#111111]">Home</a>
+          <span aria-hidden="true">/</span>
+          <span aria-current="page">{breadcrumb}</span>
+        </nav>
+        <div className="contact-hero-copy">
+          <p className="contact-eyebrow">{eyebrow}</p>
+          <h1>{title}<span>{highlight}</span>{suffix}</h1>
+          <p>{subtitle}</p>
+        </div>
+      </div>
+    </section>
+  )
+}
+
+export function ContactField({ id, label, type = 'text', value, onChange, required = false, ...props }) {
+  return (
+    <div>
+      <label htmlFor={id} className="mb-1.5 block text-sm font-semibold text-[#111111]">{label}</label>
+      <input
+        id={id}
+        name={id}
+        type={type}
+        value={value}
+        onChange={onChange}
+        required={required}
+        className="h-12 w-full rounded-xl border border-[#D8D2C7] bg-white px-4 text-sm text-[#111111] focus-visible:border-[#FACC15] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FACC15]"
+        {...props}
+      />
+    </div>
   )
 }
 
 export function ContactPage() {
   return (
     <div className="contact-page">
-      <section className="contact-hero">
-        <div className="contact-hero-inner">
-          <nav className="contact-breadcrumb" aria-label="Breadcrumb">
-            <a href="/">Home</a>
-            <span aria-hidden="true">/</span>
-            <span aria-current="page">Contact us</span>
-          </nav>
-          <div className="contact-hero-copy">
-            <p className="contact-eyebrow">ATHENS CAR RENTAL</p>
-            <h1>Contact <span>us</span></h1>
-            <p>We are here to help you plan your rental in Greece.</p>
-          </div>
-        </div>
-      </section>
+      <ContactHero
+        breadcrumb="Contact us"
+        eyebrow="ATHENS CAR RENTAL"
+        title="Contact "
+        highlight="us"
+        subtitle="We are here to help you plan your rental in Greece."
+      />
 
-      <main className="contact-main">
+      <div className="contact-main">
         <div className="contact-grid">
           <section className="contact-map-card" aria-label="Map showing Athens Car Rental location">
             <iframe
@@ -123,7 +153,7 @@ export function ContactPage() {
             </div>
           </section>
         </div>
-      </main>
+      </div>
     </div>
   )
 }

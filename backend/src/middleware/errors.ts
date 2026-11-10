@@ -14,10 +14,31 @@ export class AppError extends Error {
 }
 
 export const errorHandler: ErrorRequestHandler = (error, _request, response, _next) => {
+  if (
+    typeof error === "object" &&
+    error !== null &&
+    "type" in error &&
+    error.type === "entity.too.large"
+  ) {
+    response.status(413).json({
+      success: false,
+      error: { code: "REQUEST_BODY_TOO_LARGE", message: "Request body exceeds the allowed size" },
+    });
+    return;
+  }
+
   if (error instanceof ZodError) {
+    const fields = Object.fromEntries(error.issues.map((issue) => [
+      issue.path.join(".") || "_form",
+      issue.message,
+    ]));
     response.status(400).json({
       success: false,
-      error: { code: "VALIDATION_ERROR", message: error.issues[0]?.message ?? "Invalid request" },
+      error: {
+        code: "VALIDATION_ERROR",
+        message: error.issues[0]?.message ?? "Invalid request",
+        fields,
+      },
     });
     return;
   }
@@ -66,7 +87,12 @@ export const errorHandler: ErrorRequestHandler = (error, _request, response, _ne
     return;
   }
 
-  console.error("Unhandled request error", error);
+  if (process.env.NODE_ENV === "production") {
+    const errorName = error instanceof Error ? error.name : "UnknownError";
+    console.error("Unhandled request error", { name: errorName });
+  } else {
+    console.error("Unhandled request error", error);
+  }
   response.status(500).json({
     success: false,
     error: { code: "INTERNAL_SERVER_ERROR", message: "An unexpected error occurred" },

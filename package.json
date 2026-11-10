@@ -1,0 +1,19 @@
+{
+  "name": "athens-car-rental",
+  "private": true,
+  "scripts": {
+    "dev": "node scripts/dev.js",
+    "test:e2e": "node tests/e2e/run.mjs",
+    "test:e2e:ui": "node tests/e2e/run.mjs --ui",
+    "test:e2e:headed": "node tests/e2e/run.mjs --headed",
+    "test:e2e:report": "playwright show-report"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "^4.14.0",
+    "@playwright/test": "^1.65.0",
+    "dotenv": "^18.0.10",
+    "mailparser": "^3.14.2",
+    "pg": "^8.23.1",
+    "smtp-server": "^3.21.3"
+  }
+}

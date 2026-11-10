@@ -255,6 +255,11 @@ input[type="time"] {
     justify-content: space-between;
     gap: 1rem;
   }
+
+  .cookie-banner--customizing {
+    flex-direction: column;
+    align-items: stretch;
+  }
 }
 
 .cookie-banner__text {
@@ -301,6 +306,47 @@ input[type="time"] {
 .cookie-actions button:not(:first-child) {
   background: rgba(255,255,255,0.08);
   color: white;
+}
+
+.cookie-actions--equal {
+  width: 100%;
+}
+
+.cookie-actions.cookie-actions--equal button {
+  flex: 1;
+  border: 1px solid #FACC15;
+  background: #ffffff;
+  color: #111111;
+}
+
+.cookie-categories {
+  width: 100%;
+}
+
+.cookie-categories > p {
+  margin-bottom: 0.75rem;
+}
+
+.cookie-categories label {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  padding: 0.75rem;
+  border: 1px solid rgba(255,255,255,0.25);
+  border-radius: 0.75rem;
+}
+
+.cookie-categories input {
+  margin-top: 0.2rem;
+  accent-color: #FACC15;
+}
+
+.cookie-consent-error {
+  margin: 0;
+  padding: 0.75rem 1rem;
+  background: #111111;
+  color: #ffffff;
+  text-align: center;
 }
 
 .api-banner {

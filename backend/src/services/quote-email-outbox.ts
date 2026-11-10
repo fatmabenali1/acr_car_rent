@@ -1,8 +1,9 @@
-import { EmailDeliveryStatus } from "@prisma/client";
+import { EmailDeliveryStatus, Prisma } from "@prisma/client";
 import nodemailer, { type Transporter } from "nodemailer";
 import { z } from "zod";
 import { env, smtpConfigured } from "../config/env";
 import { prisma } from "../db";
+import { escapeHtml, page } from "./email-templates/common";
 import { renderDepositConfirmation, type DepositConfirmationPayload } from "./email-templates/deposit-confirmation";
 import { renderInternalDepositPaid, type InternalDepositPaidPayload } from "./email-templates/internal-deposit-paid";
 import { renderQuoteOffer, type QuoteOfferPayload } from "./email-templates/quote-offer";
@@ -11,7 +12,7 @@ const MAX_ATTEMPTS = 5;
 const POLL_INTERVAL_MS = 5_000;
 
 const quoteEmailPayloadSchema = z.object({
-  reference: z.string().regex(/^\d{4}[A-Z]{2}$/),
+  reference: z.string().regex(/^(?:\d{4}[A-Z]{2}|ACR-\d{4}-[A-Z0-9]{6})$/),
   customerFirstName: z.string(),
   customerLastName: z.string(),
   customerEmail: z.string().email(),
@@ -56,7 +57,7 @@ type QuoteEmailTemplate = "quote_acknowledgement" | "internal_quote_notification
 type ContactEmailTemplate = "contact_acknowledgement" | "internal_contact_notification";
 type EmailTemplate = QuoteEmailTemplate | ContactEmailTemplate | "quote_offer" | "deposit_confirmation" | "internal_deposit_paid";
 const quoteOfferPayloadSchema: z.ZodType<QuoteOfferPayload> = z.object({
-  reference: z.string().regex(/^\d{4}[A-Z]{2}$/),
+  reference: z.string().regex(/^(?:\d{4}[A-Z]{2}|ACR-\d{4}-[A-Z0-9]{6})$/),
   customerFirstName: z.string(),
   vehicleCategories: z.array(z.object({
     code: z.string(),
@@ -77,23 +78,30 @@ const quoteOfferPayloadSchema: z.ZodType<QuoteOfferPayload> = z.object({
   agencyPhones: z.array(z.string()),
 });
 const depositConfirmationPayloadSchema: z.ZodType<DepositConfirmationPayload> = z.object({
-  reference: z.string().regex(/^\d{4}[A-Z]{2}$/),
+  reference: z.string().min(1).max(64),
   customerFirstName: z.string(),
   amountPaidEur: z.string(),
   totalPaidEur: z.string(),
   balanceRemainingEur: z.string(),
   pickupAt: z.string().datetime(),
   pickupLocation: z.string(),
+  returnAt: z.string().datetime().optional(),
+  returnLocation: z.string().optional(),
+  category: z.string().optional(),
   agencyPhones: z.array(z.string()),
 });
 const internalDepositPaidPayloadSchema: z.ZodType<InternalDepositPaidPayload> = z.object({
-  reference: z.string().regex(/^\d{4}[A-Z]{2}$/),
+  reference: z.string().min(1).max(64),
   customerName: z.string(),
   customerEmail: z.string().email(),
   amountPaidEur: z.string(),
   totalPaidEur: z.string(),
   balanceRemainingEur: z.string(),
   pickupAt: z.string().datetime(),
+  pickupLocation: z.string().optional(),
+  returnAt: z.string().datetime().optional(),
+  returnLocation: z.string().optional(),
+  category: z.string().optional(),
 });
 
 let timer: NodeJS.Timeout | undefined;
@@ -101,7 +109,7 @@ let batchRunning = false;
 let smtpTransport: Transporter | undefined;
 
 function getTransport(): Transporter {
-  if (!smtpConfigured || !env.SMTP_HOST || !env.SMTP_USER || !env.SMTP_PASSWORD || !env.SMTP_FROM) {
+  if (!smtpConfigured || !env.SMTP_HOST || !env.SMTP_FROM) {
     throw new Error("SMTP is not configured");
   }
   smtpTransport ??= nodemailer.createTransport({
@@ -111,7 +119,9 @@ function getTransport(): Transporter {
     connectionTimeout: 15_000,
     greetingTimeout: 15_000,
     socketTimeout: 30_000,
-    auth: { user: env.SMTP_USER, pass: env.SMTP_PASSWORD },
+    ...(env.SMTP_USER && env.SMTP_PASSWORD
+      ? { auth: { user: env.SMTP_USER, pass: env.SMTP_PASSWORD } }
+      : {}),
   });
   return smtpTransport;
 }
@@ -127,10 +137,60 @@ function getMailContent(template: QuoteEmailTemplate, payload: QuoteEmailPayload
     dateStyle: "medium",
     timeStyle: "short",
   });
+  const isCustomerEmail = template === "quote_acknowledgement";
+  const extras = payload.extras.length
+    ? payload.extras.map((extra) => `${extra.name} x${extra.quantity}`).join(", ")
+    : lang === "el" ? "Κανένα" : "None";
+  const customerName = `${payload.customerFirstName} ${payload.customerLastName}`.trim();
+  const title = isCustomerEmail
+    ? lang === "el" ? `Λάβαμε το αίτημα προσφοράς σας — ${payload.reference}` : `We received your rental quote request — ${payload.reference}`
+    : lang === "el" ? `Νέο αίτημα προσφοράς — ${payload.reference}` : `New rental quote request — ${payload.reference}`;
+  const rows: Array<[string, string]> = isCustomerEmail
+    ? [
+      [lang === "el" ? "Αναφορά" : "Reference", payload.reference],
+      [lang === "el" ? "Κατηγορία οχήματος" : "Vehicle category", payload.vehicleCode],
+      [lang === "el" ? "Παραλαβή" : "Pickup", `${pickupAt} — ${payload.pickupLocation}`],
+      [lang === "el" ? "Επιστροφή" : "Return", `${returnAt} — ${payload.returnLocation}`],
+      [lang === "el" ? "Πρόσθετα" : "Requested extras", extras],
+    ]
+    : [
+      [lang === "el" ? "Αναφορά" : "Reference", payload.reference],
+      [lang === "el" ? "Κατηγορία οχήματος" : "Vehicle category", payload.vehicleCode],
+      [lang === "el" ? "Παραλαβή" : "Pickup", `${pickupAt} — ${payload.pickupLocation}`],
+      [lang === "el" ? "Επιστροφή" : "Return", `${returnAt} — ${payload.returnLocation}`],
+      [lang === "el" ? "Ηλικία οδηγού" : "Driver age", String(payload.driverAge)],
+      [lang === "el" ? "Πελάτης" : "Customer", customerName],
+      ["Email", payload.customerEmail],
+      [lang === "el" ? "Τηλέφωνο" : "Phone", payload.customerPhone],
+      [lang === "el" ? "Σημειώσεις" : "Notes", payload.notes?.trim() || (lang === "el" ? "—" : "—")],
+    ];
+  const rowsHtml = rows.map(([label, value]) => `<tr>
+    <td style="width:34%;padding:10px 12px;border-bottom:1px solid #e5e5e5;background-color:#fff8d6;font-weight:bold;vertical-align:top">${escapeHtml(label)}</td>
+    <td style="padding:10px 12px;border-bottom:1px solid #e5e5e5;vertical-align:top;white-space:pre-wrap">${escapeHtml(value)}</td>
+  </tr>`).join("");
+  const introduction = isCustomerEmail
+    ? lang === "el"
+      ? "Λάβαμε το αίτημα προσφοράς ενοικίασης. Δεν πρόκειται για επιβεβαιωμένη κράτηση."
+      : "We received your rental quote request. This is not a confirmed booking."
+    : lang === "el" ? "Νέο αίτημα προσφοράς ενοικίασης." : "New rental quote request.";
+  const closing = isCustomerEmail
+    ? lang === "el"
+      ? "Η ομάδα της ACR θα επικοινωνήσει μαζί σας με προσφορά και οδηγίες πληρωμής προκαταβολής. Μην αποστείλετε στοιχεία κάρτας μέσω email."
+      : "The ACR team will contact you with a quote and deposit payment instructions. Please do not send card details by email."
+    : "";
+  const html = page(title, `<p style="margin:0 0 16px">${isCustomerEmail
+    ? `${lang === "el" ? "Γεια σας" : "Hello"} ${escapeHtml(payload.customerFirstName)},<br>`
+    : ""}${escapeHtml(introduction)}</p>
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="border-collapse:collapse;font-size:14px">${rowsHtml}</table>
+    ${isCustomerEmail
+    ? `<p style="margin:20px 0 0">${escapeHtml(closing)}</p>
+      <p style="margin:16px 0 0"><strong>${lang === "el" ? "Επικοινωνία ACR" : "ACR contact"}:</strong><br>
+      ${escapeHtml(env.AGENCY_PHONE)}<br><a href="mailto:${escapeHtml(env.AGENCY_EMAIL)}" style="color:#111111">${escapeHtml(env.AGENCY_EMAIL)}</a></p>`
+    : ""}`);
 
   if (template === "quote_acknowledgement" && lang === "el") {
     return {
-      subject: `Λάβαμε το αίτημα προσφοράς σας — ${payload.reference}`,
+      subject: title,
       text: [
         `Γεια σας ${payload.customerFirstName},`,
         "",
@@ -144,13 +204,15 @@ function getMailContent(template: QuoteEmailTemplate, payload: QuoteEmailPayload
         "Η ομάδα της ACR θα επικοινωνήσει μαζί σας με προσφορά και οδηγίες πληρωμής προκαταβολής.",
         "Μην αποστείλετε στοιχεία κάρτας μέσω email.",
         "",
+        `Επικοινωνία ACR: ${env.AGENCY_PHONE} · ${env.AGENCY_EMAIL}`,
         "Athens Car Rental",
       ].join("\n"),
+      html,
     };
   }
   if (template === "quote_acknowledgement") {
     return {
-      subject: `We received your rental quote request — ${payload.reference}`,
+      subject: title,
       text: [
         `Hello ${payload.customerFirstName},`,
         "",
@@ -159,52 +221,49 @@ function getMailContent(template: QuoteEmailTemplate, payload: QuoteEmailPayload
         `Vehicle category: ${payload.vehicleCode}`,
         `Pickup: ${pickupAt} — ${payload.pickupLocation}`,
         `Return: ${returnAt} — ${payload.returnLocation}`,
-        `Requested extras: ${payload.extras.length ? payload.extras.map((extra) => `${extra.name} x${extra.quantity}`).join(", ") : "None"}`,
+        `Requested extras: ${extras}`,
         "",
         "The ACR team will contact you with a quote and deposit payment instructions.",
         "Please do not send card details by email.",
         "",
-        "Athens Car Rental",
+        `ACR contact: ${env.AGENCY_PHONE} · ${env.AGENCY_EMAIL}`,
       ].join("\n"),
+      html,
     };
   }
   if (lang === "el") {
     return {
-      subject: `Νέο αίτημα προσφοράς — ${payload.reference}`,
+      subject: title,
       text: [
+        `${introduction}`,
         `Αναφορά: ${payload.reference}`,
-        `Πελάτης: ${payload.customerFirstName} ${payload.customerLastName}`,
-        `Email: ${payload.customerEmail}`,
-        `Τηλέφωνο: ${payload.customerPhone}`,
-        `Χώρα: ${payload.customerCountry}`,
         `Κατηγορία οχήματος: ${payload.vehicleCode}`,
         `Παραλαβή: ${pickupAt} — ${payload.pickupLocation}`,
         `Επιστροφή: ${returnAt} — ${payload.returnLocation}`,
-        `Αριθμός πτήσης: ${payload.flightNumber ?? "—"}`,
-        `Κύριος οδηγός: ηλικία ${payload.driverAge}, άδεια ${payload.driverLicenceYears} έτος/έτη, χώρα ${payload.driverCountryCode}, διεθνής άδεια: ${payload.driverHasInternationalPermit ? "ναι" : "όχι"}`,
-        `Επιπλέον οδηγοί: ${payload.additionalDrivers.length ? payload.additionalDrivers.map((driver, index) => `#${index + 1} ηλικία ${driver.age}, άδεια ${driver.licenceYears} έτος/έτη, χώρα ${driver.countryCode}, διεθνής άδεια: ${driver.hasInternationalPermit ? "ναι" : "όχι"}`).join("; ") : "Κανένας"}`,
-        `Πρόσθετα: ${payload.extras.length ? payload.extras.map((extra) => `${extra.name} x${extra.quantity}${extra.childAge === null ? "" : `, ηλικία παιδιού ${extra.childAge}`}${extra.childWeightKg === null ? "" : `, βάρος παιδιού ${extra.childWeightKg} kg`}`).join("; ") : "Κανένα"}`,
+        `Ηλικία οδηγού: ${payload.driverAge}`,
+        `Πελάτης: ${customerName}`,
+        `Email: ${payload.customerEmail}`,
+        `Τηλέφωνο: ${payload.customerPhone}`,
         `Σημειώσεις: ${payload.notes ?? "—"}`,
       ].join("\n"),
+      html,
     };
   }
   return {
-    subject: `New rental quote request — ${payload.reference}`,
+    subject: title,
     text: [
+      introduction,
       `Reference: ${payload.reference}`,
-      `Customer: ${payload.customerFirstName} ${payload.customerLastName}`,
-      `Email: ${payload.customerEmail}`,
-      `Phone: ${payload.customerPhone}`,
-      `Country: ${payload.customerCountry}`,
       `Vehicle category: ${payload.vehicleCode}`,
       `Pickup: ${pickupAt} — ${payload.pickupLocation}`,
       `Return: ${returnAt} — ${payload.returnLocation}`,
-      `Flight number: ${payload.flightNumber ?? "—"}`,
-      `Main driver: age ${payload.driverAge}, licence held ${payload.driverLicenceYears} year(s), country ${payload.driverCountryCode}, international permit: ${payload.driverHasInternationalPermit ? "yes" : "no"}`,
-      `Additional drivers: ${payload.additionalDrivers.length ? payload.additionalDrivers.map((driver, index) => `#${index + 1} age ${driver.age}, licence ${driver.licenceYears} year(s), country ${driver.countryCode}, international permit: ${driver.hasInternationalPermit ? "yes" : "no"}`).join("; ") : "None"}`,
-      `Extras: ${payload.extras.length ? payload.extras.map((extra) => `${extra.name} x${extra.quantity}${extra.childAge === null ? "" : `, child age ${extra.childAge}`}${extra.childWeightKg === null ? "" : `, child weight ${extra.childWeightKg} kg`}`).join("; ") : "None"}`,
-      `Notes: ${payload.notes ?? "—"}`,
+      `Driver age: ${payload.driverAge}`,
+      `Customer: ${customerName}`,
+      `Email: ${payload.customerEmail}`,
+      `Phone: ${payload.customerPhone}`,
+      `Notes: ${payload.notes?.trim() || "—"}`,
     ].join("\n"),
+    html,
   };
 }
 
@@ -324,7 +383,15 @@ async function deliverOutboxItem(item: {
         lastError: message,
       },
     });
-    console.error("Quote email delivery failed", { outboxId: item.id, template: item.template, attempts, error });
+    const loggedError = process.env.NODE_ENV === "production"
+      ? {
+          name: error instanceof Error ? error.name : "UnknownError",
+          code: typeof error === "object" && error !== null && "code" in error
+            ? String(error.code)
+            : undefined,
+        }
+      : error;
+    console.error("Quote email delivery failed", { outboxId: item.id, template: item.template, attempts, error: loggedError });
   }
 }
 
@@ -365,9 +432,98 @@ export async function processPendingEmails(batchSize = 10): Promise<void> {
       await deliverOutboxItem(candidate);
     }
   } catch (error) {
-    console.error("Email outbox processing failed", error);
+    if (process.env.NODE_ENV === "production") {
+      console.error("Email outbox processing failed", {
+        name: error instanceof Error ? error.name : "UnknownError",
+      });
+    } else {
+      console.error("Email outbox processing failed", error);
+    }
   } finally {
     batchRunning = false;
+  }
+}
+
+export async function queueDepositPaidEmails(
+  transaction: Prisma.TransactionClient,
+  quoteId: string,
+): Promise<void> {
+  const quote = await transaction.quote.findUnique({
+    where: { id: quoteId },
+    include: {
+      pickupLocation: { select: { name: true, slug: true } },
+      returnLocation: { select: { name: true, slug: true } },
+      vehicles: { include: { vehicle: { select: { code: true, name: true } } } },
+      payments: { where: { status: "PAID" }, orderBy: { createdAt: "asc" } },
+    },
+  });
+  if (!quote || quote.payments.length === 0) {
+    throw new Error("Cannot queue payment emails without a paid booking and payment");
+  }
+  const localized = (value: Prisma.JsonValue, fallback: string): string => {
+    if (typeof value === "object" && value !== null && !Array.isArray(value)) {
+      const text = value.en;
+      if (typeof text === "string") return text;
+    }
+    return fallback;
+  };
+  const category = quote.vehicles.map(({ vehicle }) => localized(vehicle.name, vehicle.code)).join(", ") || quote.categorySlug || "—";
+  const pickupLocation = quote.pickupLocationLabel
+    ?? localized(quote.pickupLocation.name, quote.pickupLocation.slug);
+  const returnLocation = quote.returnLocationLabel
+    ?? localized(quote.returnLocation.name, quote.returnLocation.slug);
+  const amountPaid = quote.payments.reduce((sum, payment) => sum + Number(payment.amountEur), 0);
+  const total = Number(quote.quotedTotalEur ?? 0);
+  const common = {
+    reference: quote.reference,
+    amountPaidEur: amountPaid.toFixed(2),
+    totalPaidEur: amountPaid.toFixed(2),
+    balanceRemainingEur: Math.max(0, total - amountPaid).toFixed(2),
+    pickupAt: quote.pickupAt.toISOString(),
+    pickupLocation,
+    returnAt: quote.returnAt.toISOString(),
+    returnLocation,
+    category,
+  };
+  const templates = ["deposit_confirmation", "internal_deposit_paid"];
+  const existing = await transaction.emailOutbox.findMany({
+    where: { quoteId, template: { in: templates } },
+    select: { template: true },
+  });
+  const alreadyQueued = new Set(existing.map((item) => item.template));
+  const language = quote.language === "el" ? "el" : "en";
+  const agencyEmail = env.MAIL_TO_AGENCY ?? env.AGENCY_EMAIL;
+  if (!alreadyQueued.has("deposit_confirmation")) {
+    const payload: DepositConfirmationPayload = {
+      ...common,
+      customerFirstName: quote.customerFirstName,
+      agencyPhones: [env.AGENCY_PHONE, env.AGENCY_SECONDARY_PHONE],
+    };
+    await transaction.emailOutbox.create({
+      data: {
+        quoteId,
+        recipient: quote.customerEmail,
+        template: "deposit_confirmation",
+        language,
+        payload: payload as Prisma.InputJsonValue,
+      },
+    });
+  }
+  if (!alreadyQueued.has("internal_deposit_paid")) {
+    const payload: InternalDepositPaidPayload = {
+      ...common,
+      customerName: `${quote.customerFirstName} ${quote.customerLastName}`,
+      customerEmail: quote.customerEmail,
+    };
+    await transaction.emailOutbox.create({
+      data: {
+        quoteId,
+        recipient: agencyEmail,
+        template: "internal_deposit_paid",
+        language,
+        payload: payload as Prisma.InputJsonValue,
+      },
+    });
   }
 }
 

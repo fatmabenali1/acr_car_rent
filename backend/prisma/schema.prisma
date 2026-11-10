@@ -41,10 +41,13 @@ enum QuoteStatus {
 }
 
 enum PaymentStatus {
+  CREATED
   INITIATED
   PAID
   FAILED
   CANCELLED
+  EXPIRED
+  REFUNDED
 }
 
 enum EmailDeliveryStatus {
@@ -99,22 +102,25 @@ model Vehicle {
 }
 
 model Location {
-  id           String   @id @default(cuid())
-  slug         String   @unique
-  name         Json
-  description  Json?
-  address      String?
-  latitude     Decimal? @db.Decimal(10, 7)
-  longitude    Decimal? @db.Decimal(10, 7)
-  phone        String?
-  isAirport    Boolean  @default(false)
-  isFree       Boolean  @default(false)
-  displayOrder Int      @default(0)
-  isActive     Boolean  @default(true)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-  pickupQuotes Quote[]  @relation("PickupLocation")
-  returnQuotes Quote[]  @relation("ReturnLocation")
+  id                 String   @id @default(cuid())
+  slug               String   @unique
+  name               Json
+  description        Json?
+  address            String?
+  latitude           Decimal? @db.Decimal(10, 7)
+  longitude          Decimal? @db.Decimal(10, 7)
+  phone              String?
+  isAirport          Boolean  @default(false)
+  isFree             Boolean  @default(false)
+  locationType       String   @default("address")
+  afterHoursFeeCents Int?
+  deliveryFeeCents   Int?
+  displayOrder       Int      @default(0)
+  isActive           Boolean  @default(true)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+  pickupQuotes       Quote[]  @relation("PickupLocation")
+  returnQuotes       Quote[]  @relation("ReturnLocation")
 }
 
 model Extra {
@@ -286,6 +292,10 @@ model Quote {
   driverHasInternationalPermit Boolean
   additionalDrivers            Json
   notes                        String?
+  categorySlug                 String?
+  coupon                       String?
+  pickupLocationLabel          String?
+  returnLocationLabel          String?
   quotedTotalEur               Decimal?       @db.Decimal(10, 2)
   depositEur                   Decimal?       @db.Decimal(10, 2)
   quoteSentAt                  DateTime?
@@ -349,28 +359,38 @@ model QuoteExtra {
 }
 
 model Payment {
-  id                    String        @id @default(cuid())
-  quoteId               String
-  provider              String
-  providerTransactionId String?       @unique
-  idempotencyKey        String        @unique
-  amountEur             Decimal       @db.Decimal(10, 2)
-  currency              String        @default("EUR")
-  status                PaymentStatus @default(INITIATED)
-  checkoutUrl           String?
-  customerFirstName     String
-  customerLastName      String
-  customerEmail         String
-  billingAddress        Json
-  deliveryAt            DateTime?
-  notes                 String?
-  termsAcceptedAt       DateTime
-  providerResponse      Json?
-  createdAt             DateTime      @default(now())
-  updatedAt             DateTime      @updatedAt
-  quote                 Quote         @relation(fields: [quoteId], references: [id])
+  id                      String        @id @default(cuid())
+  quoteId                 String
+  provider                String
+  providerTransactionId   String?       @unique
+  providerPaymentIntentId String?       @unique
+  idempotencyKey          String        @unique
+  amountEur               Decimal       @db.Decimal(10, 2)
+  currency                String        @default("EUR")
+  status                  PaymentStatus @default(INITIATED)
+  paidAt                  DateTime?
+  checkoutUrl             String?
+  customerFirstName       String
+  customerLastName        String
+  customerEmail           String
+  billingAddress          Json
+  deliveryAt              DateTime?
+  notes                   String?
+  termsAcceptedAt         DateTime
+  providerResponse        Json?
+  rawEventId              String?       @unique
+  createdAt               DateTime      @default(now())
+  updatedAt               DateTime      @updatedAt
+  quote                   Quote         @relation(fields: [quoteId], references: [id])
 
   @@index([quoteId, status])
+}
+
+model ProcessedStripeEvent {
+  id          String   @id @default(cuid())
+  eventId     String   @unique
+  eventType   String
+  processedAt DateTime @default(now())
 }
 
 model ContactMessage {

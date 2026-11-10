@@ -1,4 +1,7 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { CarFront } from 'lucide-react'
+import { getCheckoutLocations } from '../api/checkout'
+import './HomePage.css'
 
 function formatIsoDate(date) {
   if (!date) return ''
@@ -53,7 +56,7 @@ function FieldBlock({
         'relative h-12 rounded-lg border border-slate-200 bg-white transition-colors duration-200 focus-within:border-[#FACC15] focus-within:ring-2 focus-within:ring-[#FACC15]/40',
         error ? 'border-red-300' : '',
       ].join(' ')}>
-        <span className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-navy" aria-hidden="true">
+        <span className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-black" aria-hidden="true">
           {icon}
         </span>
 
@@ -118,148 +121,31 @@ function FieldBlock({
 
 function FeatureTileIcon({ name, className, width = 28, height = 28 }) {
   return (
-    <svg width={width} height={height} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className={className} aria-hidden="true">
-      {name === 'star' && <path d="m12 2.75 2.86 5.79 6.39.93-4.63 4.51 1.09 6.36L12 17.34l-5.71 3 1.09-6.36-4.63-4.51 6.39-.93L12 2.75Z" strokeLinecap="round" strokeLinejoin="round" />}
+    <svg width={width} height={height} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" className={className} aria-hidden="true">
       {name === 'award' && (
         <>
-          <circle cx="12" cy="8" r="6" />
-          <path d="m8.2 13.2-1.1 8 4.9-2.8 4.9 2.8-1.1-8" strokeLinecap="round" strokeLinejoin="round" />
+          <circle cx="12" cy="8" r="5.5" strokeLinecap="round" strokeLinejoin="round" />
+          <path d="m8.3 12.2-1.1 8 4.8-2.7 4.8 2.7-1.1-8M12 5.5v5M9.5 8h5" strokeLinecap="round" strokeLinejoin="round" />
         </>
       )}
       {name === 'truck' && (
         <>
-          <path d="M10 17h4V5H2v12h3m9 0h3m5 0h-2V9h-5" strokeLinecap="round" strokeLinejoin="round" />
-          <path d="M14 9h5l3 4v4h-3" strokeLinecap="round" strokeLinejoin="round" />
-          <circle cx="7.5" cy="17.5" r="2.5" />
-          <circle cx="16.5" cy="17.5" r="2.5" />
+          <path d="M2.5 6.5h12v11h-12zM14.5 10h4l3 3.5v4h-7" strokeLinecap="round" strokeLinejoin="round" />
+          <circle cx="6.5" cy="18" r="2" />
+          <circle cx="17.5" cy="18" r="2" />
         </>
       )}
-      {name === 'badge-percent' && (
+      {name === 'tag' && (
         <>
-          <path d="M12 3H5a2 2 0 0 0-2 2v7l9 9 9-9-9-9Z" strokeLinecap="round" strokeLinejoin="round" />
-          <circle cx="7.5" cy="7.5" r=".5" />
-          <path d="m15 9-6 6m.5-6h.01m5 6h.01" strokeLinecap="round" strokeLinejoin="round" />
+          <path d="M20.5 13.5 13 21l-10-10V3h8l9.5 10.5Z" strokeLinecap="round" strokeLinejoin="round" />
+          <circle cx="7.5" cy="7.5" r="1" />
         </>
       )}
     </svg>
   )
 }
 
-function TripAdvisorAwardBadge() {
-  const [imageError, setImageError] = useState(false)
-
-  if (imageError) {
-    return <FeatureTileIcon name="award" width={48} height={48} className="h-12 w-12 shrink-0 text-[#FACC15]" />
-  }
-
-  return (
-    <img
-      src="/images/tripadvisor-travelers-choice.png"
-      alt="TripAdvisor Travelers' Choice badge"
-      width={220}
-      height={120}
-      loading="lazy"
-      onError={() => setImageError(true)}
-      className="h-16 w-auto object-contain"
-    />
-  )
-}
-
-function VehicleCard({ model, category, image, alt, seats, transmission, bags, price }) {
-  const [imageError, setImageError] = useState(false)
-
-  return (
-    <article className="group flex h-full flex-col overflow-hidden rounded-3xl bg-white shadow-md ring-1 ring-black/5 transition duration-300 hover:-translate-y-1 hover:shadow-xl focus-within:ring-2 focus-within:ring-amber-500">
-      <div className="relative aspect-[4/3] bg-slate-50 p-4">
-        <span className="absolute left-4 top-4 rounded-full bg-white px-3 py-1 text-xs font-semibold text-navy shadow">
-          {category}
-        </span>
-
-        {!imageError ? (
-          <img
-            src={image}
-            alt={alt}
-            width={640}
-            height={480}
-            loading="lazy"
-            onError={() => setImageError(true)}
-            className="h-full w-full object-contain transition duration-500 group-hover:scale-105"
-          />
-        ) : (
-          <div className="flex h-full w-full items-center justify-center">
-            <svg viewBox="0 0 24 24" width={64} height={64} fill="none" stroke="currentColor" strokeWidth="1.6" className="h-16 w-16 shrink-0 text-slate-300" aria-hidden="true">
-              <path d="M4 15.5h16l-1.1-5.2A2 2 0 0 0 16.9 8H7.1a2 2 0 0 0-1.9 1.5L4 15.5Z" strokeLinecap="round" strokeLinejoin="round" />
-              <path d="M7 8.5 8.5 5h7l1.5 3.5M8.5 15.5v1.5m7-1.5v1.5M8 17a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3Zm8 0a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3Z" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          </div>
-        )}
-      </div>
-
-      <div className="flex flex-1 flex-col p-5">
-        <h3 className="text-lg font-extrabold text-navy">{model}</h3>
-
-        <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-600">
-          <span className="inline-flex items-center gap-1.5">
-            <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-4 w-4 shrink-0" aria-hidden="true">
-              <path d="M16 19v-1a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v1" strokeLinecap="round" strokeLinejoin="round" />
-              <circle cx="10" cy="7" r="3.5" />
-              <path d="M20 19v-1a4 4 0 0 0-3-3.87" strokeLinecap="round" strokeLinejoin="round" />
-              <path d="M16 4.5a3.5 3.5 0 0 1 0 7" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-            {seats}
-          </span>
-
-          <span className="inline-flex items-center gap-1.5">
-            <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-4 w-4 shrink-0" aria-hidden="true">
-              <path d="M5 7h14M5 12h9M5 17h14" strokeLinecap="round" strokeLinejoin="round" />
-              <path d="M14 5v14" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-            {transmission}
-          </span>
-
-          <span className="inline-flex items-center gap-1.5">
-            <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-4 w-4 shrink-0" aria-hidden="true">
-              <path d="M4 8.5h16v8H4z" strokeLinecap="round" strokeLinejoin="round" />
-              <path d="M8 8.5V6.5h8v2" strokeLinecap="round" strokeLinejoin="round" />
-              <path d="M7 12h10" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-            {bags} bags
-          </span>
-        </div>
-
-        <div className="mt-4 border-t border-slate-100" />
-
-        <div className="mt-auto flex items-center justify-between pt-4">
-          <p className="text-sm font-semibold text-slate-700">
-            <span className="text-base font-extrabold text-amber-600">From {price}</span>
-            <span className="ml-1 text-slate-500">/ day</span>
-          </p>
-
-          <a
-            href="/booking"
-            className="inline-flex items-center justify-center rounded-xl bg-navy px-4 py-2 text-sm font-bold text-white transition hover:bg-[#0B2347] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2 motion-reduce:transition-none"
-          >
-            Book now
-          </a>
-        </div>
-      </div>
-    </article>
-  )
-}
-
-export function HomePage({ data, offers = [], reviews = [], lang = 'en', loading, error, fallbackImage }) {
-  const slides = data?.slides || []
-  const banners = data?.banners || []
-  const argumentsList = data?.arguments || []
-
-  const locationOptions = [
-    'Athens Airport (ATH)',
-    'Athens City Center',
-    'Koropi',
-    'Piraeus Port',
-    'Athens Central Station',
-  ]
-
+export function HomePage() {
   const [form, setForm] = useState({
     pickupLocation: '',
     pickupDate: getDefaultDate(0),
@@ -272,17 +158,30 @@ export function HomePage({ data, offers = [], reviews = [], lang = 'en', loading
 
   const [errors, setErrors] = useState({})
   const [isLoading, setIsLoading] = useState(false)
-  const [locationSuggestions, setLocationSuggestions] = useState(locationOptions)
-  const [heroBackgroundFailed, setHeroBackgroundFailed] = useState(false)
-
-  const reasons = [
-    '0% card fee / 0% commission on card payments',
-    'Free ferry boarding authorization to all Greek islands',
-    '24/7 airport delivery and fast support',
-  ]
-
+  const [locationSuggestions, setLocationSuggestions] = useState([])
+  const [locationLookupError, setLocationLookupError] = useState('')
   const [expandedService, setExpandedService] = useState(null)
   const [serviceCardPhotos, setServiceCardPhotos] = useState({})
+
+  useEffect(() => {
+    let active = true
+    const timer = window.setTimeout(() => {
+      getCheckoutLocations(form.pickupLocation)
+        .then((locations) => {
+          if (active) {
+            setLocationSuggestions(locations.map((location) => location.name))
+            setLocationLookupError('')
+          }
+        })
+        .catch((error) => {
+          if (active) setLocationLookupError(error.message)
+        })
+    }, 180)
+    return () => {
+      active = false
+      window.clearTimeout(timer)
+    }
+  }, [form.pickupLocation])
 
   // Service arguments and category tiles for the My Services block.
   const serviceCards = [
@@ -321,25 +220,25 @@ export function HomePage({ data, offers = [], reviews = [], lang = 'en', loading
 
   const photoCards = [
     {
-      href: '/fleet?category=luxury',
+      href: '/vehicles/luxury-cars',
       title: 'Luxury & Premium',
       subtitle: 'Cars',
-      image: '/images/cars/luxury-bmw.webp',
-      alt: 'Luxury and premium car fleet',
+      image: '/images/cars/luxrybmw.jpg',
+      alt: 'BMW X1 luxury SUV rental in Athens',
     },
     {
-      href: '/fleet?category=minibus',
+      href: '/vehicles/mini-vans',
       title: 'Rent a Mini Bus',
       subtitle: 'Athens Airport',
-      image: '/images/cars/minibus.webp',
-      alt: 'Mini bus rental at Athens Airport',
+      image: '/images/cars/minibus.jpg',
+      alt: 'Peugeot minibus rental at Athens Airport',
     },
     {
-      href: '/fleet?category=suv',
+      href: '/vehicles/suvs',
       title: 'SUV Car Rental',
       subtitle: 'Available for bookings',
-      image: '/images/cars/suv.webp',
-      alt: 'SUV rental service',
+      image: '/images/cars/suvcarrental.jpg',
+      alt: 'Skoda Kodiaq SUV rental in Athens',
     },
   ]
 
@@ -358,15 +257,6 @@ export function HomePage({ data, offers = [], reviews = [], lang = 'en', loading
 
   const handleLocationChange = (value) => {
     updateField('pickupLocation', value)
-    const text = value.trim().toLowerCase()
-    if (!text) {
-      setLocationSuggestions(locationOptions)
-      return
-    }
-
-    setLocationSuggestions(
-      locationOptions.filter((option) => option.toLowerCase().includes(text))
-    )
   }
 
   const handleSubmit = (event) => {
@@ -429,11 +319,6 @@ export function HomePage({ data, offers = [], reviews = [], lang = 'en', loading
 
   return (
     <section className="page page-home">
-      {loading && <div className="state-box">Loading home content…</div>}
-      {error && !loading && <div className="state-box error">{error}</div>}
-
-      {!loading && !error && (
-        <>
           <section className="relative isolate min-h-[700px] w-full overflow-hidden bg-white lg:min-h-[760px]">
             <div className="absolute inset-0 -z-10">
               <img
@@ -452,29 +337,29 @@ export function HomePage({ data, offers = [], reviews = [], lang = 'en', loading
 
             <div className="relative z-10 mx-auto w-full max-w-[1760px] px-4 pb-56 pt-10 sm:px-6 lg:px-10 lg:pb-56 lg:pt-14 2xl:px-16">
               <div className="lg:max-w-[52%]">
-                <p className="text-xs font-semibold uppercase tracking-[0.25em] text-amber-600 lg:text-amber-400">
+                <p className="text-xs font-semibold uppercase tracking-[0.25em] text-[#FACC15]">
                   ATHENS CAR RENTAL GREECE
                 </p>
 
-                <h1 className="mt-4 text-4xl font-extrabold leading-[1.1] text-navy sm:text-5xl lg:text-[3.5rem] lg:text-white lg:drop-shadow-[0_2px_12px_rgba(0,0,0,0.55)]">
+                <h1 className="mt-4 text-4xl font-extrabold leading-[1.1] text-white sm:text-5xl lg:text-[3.5rem] lg:drop-shadow-[0_2px_12px_rgba(0,0,0,0.55)]">
                   <span className="block">Find Your Perfect Car</span>
-                  <span className="block">Drive Your <span className="text-[#F59E0B]">Journey</span></span>
+                  <span className="block">Drive Your <span className="text-[#FACC15]">Journey</span></span>
                 </h1>
 
-                <p className="mt-5 max-w-md text-base font-medium text-slate-700 lg:text-white/95 lg:drop-shadow-[0_1px_8px_rgba(0,0,0,0.6)]">
+                <p className="mt-5 max-w-md text-base font-medium text-white/95 drop-shadow-[0_1px_8px_rgba(0,0,0,0.6)]">
                   Premium, flexible and reliable fleet for airport pickup, city travel, island escapes and long stays.
                 </p>
 
                 <div className="mt-8 flex gap-3">
                   <a
                     href="/booking"
-                    className="inline-flex items-center justify-center rounded-xl bg-[#FACC15] px-7 py-3.5 text-sm font-bold text-slate-900 transition hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2 motion-reduce:transition-none motion-reduce:hover:translate-y-0"
+                    className="inline-flex items-center justify-center rounded-xl bg-[#FACC15] px-7 py-3.5 text-sm font-bold text-slate-900 transition hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FACC15] focus-visible:ring-offset-2 motion-reduce:transition-none motion-reduce:hover:translate-y-0"
                   >
                     Book now
                   </a>
                   <a
                     href="/rates"
-                    className="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-7 py-3.5 text-sm font-bold text-navy transition hover:-translate-y-0.5 hover:border-slate-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2 motion-reduce:transition-none motion-reduce:hover:translate-y-0 lg:border-white/50 lg:bg-white/15 lg:text-white lg:ring-1 lg:ring-white/50 lg:backdrop-blur-sm lg:hover:bg-white/25"
+                    className="inline-flex items-center justify-center rounded-xl border border-white/50 bg-black/70 px-7 py-3.5 text-sm font-bold text-white transition hover:-translate-y-0.5 hover:bg-black/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FACC15] focus-visible:ring-offset-2 motion-reduce:transition-none motion-reduce:hover:translate-y-0 lg:bg-white/15 lg:ring-1 lg:ring-white/50 lg:backdrop-blur-sm lg:hover:bg-white/25"
                   >
                     View rates
                   </a>
@@ -487,7 +372,7 @@ export function HomePage({ data, offers = [], reviews = [], lang = 'en', loading
                     { title: '24/7 assistance', detail: 'Road support' },
                   ].map((item) => (
                     <div key={item.title} className="flex min-w-0 shrink-0 items-center gap-3 whitespace-nowrap">
-                      <span className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-navy shadow-sm ring-1 ring-slate-200 lg:bg-white/20 lg:text-white lg:ring-white/40">
+                      <span className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-black shadow-sm ring-1 ring-slate-200 lg:bg-white/20 lg:text-white lg:ring-white/40">
                         <svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-5 w-5 shrink-0" aria-hidden="true">
                           <path d="M5 12.5 9.5 17 19 7.5" strokeLinecap="round" strokeLinejoin="round" />
                         </svg>
@@ -508,7 +393,7 @@ export function HomePage({ data, offers = [], reviews = [], lang = 'en', loading
               <div className="mb-0 flex items-center gap-2 border-b border-slate-100 pb-3">
                 <button
                   type="button"
-                  className="inline-flex items-center gap-2 rounded-lg border-b-2 border-[#FACC15] bg-navy px-4 py-2 text-sm font-semibold text-white"
+                  className="inline-flex items-center gap-2 rounded-lg border-b-2 border-[#FACC15] bg-[#FACC15] px-4 py-2 text-sm font-semibold text-black"
                   aria-label="Rent a Car"
                 >
                   <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-4 w-4 shrink-0" aria-hidden="true">
@@ -517,6 +402,12 @@ export function HomePage({ data, offers = [], reviews = [], lang = 'en', loading
                   </svg>
                   <span>Rent a Car</span>
                 </button>
+                <a
+                  href="/cargo-vans"
+                  className="inline-flex min-h-11 items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold text-[#111111] transition hover:bg-[#FEF3C7] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FACC15] motion-reduce:transition-none"
+                >
+                  Cargo vans
+                </a>
               </div>
 
               <form
@@ -545,6 +436,7 @@ export function HomePage({ data, offers = [], reviews = [], lang = 'en', loading
                       </svg>
                     }
                   />
+                  {locationLookupError && <p className="text-xs text-red-600" role="status">{locationLookupError}</p>}
 
                   <FieldBlock
                     id="pickup-date"
@@ -664,52 +556,11 @@ export function HomePage({ data, offers = [], reviews = [], lang = 'en', loading
             </div>
           </section>
 
-          {/* Our fleet: premium vehicle cards - placed directly under the booking widget */}
-          <section className="pt-6 lg:pt-8">
-            <div className="mx-auto w-full max-w-[1760px] px-4 sm:px-6 lg:px-10 2xl:px-16">
-              <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-                <div>
-                  <p className="mb-1 text-xs font-semibold uppercase tracking-[0.25em] text-amber-600">POPULAR VEHICLES</p>
-                  <h2 className="text-3xl font-extrabold text-navy lg:text-4xl">Choose Your Perfect Car</h2>
-                </div>
-
-                <a href="/pricelist" className="inline-flex items-center gap-2 text-sm font-semibold text-amber-600 transition hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2">
-                  <span>View all vehicles</span>
-                  <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-4 w-4 shrink-0" aria-hidden="true">
-                    <path d="M5 12h14" strokeLinecap="round" strokeLinejoin="round" />
-                    <path d="m13 5 7 7-7 7" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                </a>
-              </div>
-
-              <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-                {[
-                  { model: 'Toyota Yaris', category: 'Economy', image: '/images/cars/yaris.webp', alt: 'Toyota Yaris economy car', seats: '5 seats', transmission: 'Manual', bags: '2', price: '25 EUR' },
-                  { model: 'Skoda Scala', category: 'Compact', image: '/images/cars/scala.webp', alt: 'Skoda Scala compact car', seats: '5 seats', transmission: 'Automatic', bags: '2', price: '32 EUR' },
-                  { model: 'Fiat 500', category: 'City', image: '/images/cars/fiat500.webp', alt: 'Fiat 500 city car', seats: '4 seats', transmission: 'Manual', bags: '1', price: '28 EUR' },
-                  { model: 'Hyundai Tucson', category: 'SUV', image: '/images/cars/tucson.webp', alt: 'Hyundai Tucson SUV', seats: '5 seats', transmission: 'Automatic', bags: '3', price: '48 EUR' },
-                ].map((vehicle) => (
-                  <VehicleCard
-                    key={vehicle.model}
-                    model={vehicle.model}
-                    category={vehicle.category}
-                    image={vehicle.image}
-                    alt={vehicle.alt}
-                    seats={vehicle.seats}
-                    transmission={vehicle.transmission}
-                    bags={vehicle.bags}
-                    price={vehicle.price}
-                  />
-                ))}
-              </div>
-            </div>
-          </section>
-
           <section className="relative z-10 pt-12 pb-8 lg:pt-12">
             <div className="mx-auto w-full max-w-[1760px] px-4 sm:px-6 lg:px-10 2xl:px-16">
               <p className="mb-8 text-center text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">
                 Supported by
-                <span className="mx-auto mt-3 block h-0.5 w-10 rounded-full bg-amber-500" aria-hidden="true" />
+                <span className="mx-auto mt-3 block h-0.5 w-10 rounded-full bg-[#FACC15]" aria-hidden="true" />
               </p>
 
               <div className="grid grid-cols-1 gap-5 sm:grid-cols-3">
@@ -740,7 +591,7 @@ export function HomePage({ data, offers = [], reviews = [], lang = 'en', loading
                   },
                 ].map((logo) => {
                   const content = (
-                    <figure className="flex h-28 w-full items-center justify-center rounded-2xl bg-white p-5 shadow-md ring-1 ring-slate-200 transition duration-300 hover:-translate-y-1 hover:shadow-xl hover:ring-amber-300 motion-reduce:transition-none motion-reduce:hover:translate-y-0">
+                    <figure className="flex h-28 w-full items-center justify-center rounded-2xl bg-white p-5 shadow-md ring-1 ring-slate-200 transition duration-300 hover:-translate-y-1 hover:shadow-xl hover:ring-[#FACC15] motion-reduce:transition-none motion-reduce:hover:translate-y-0">
                       <img
                         src={logo.src}
                         alt={logo.alt}
@@ -768,102 +619,90 @@ export function HomePage({ data, offers = [], reviews = [], lang = 'en', loading
             </div>
           </section>
 
-          <section className="bg-[#F7F4EF] py-8 lg:py-8">
-            <div className="mx-auto w-full max-w-[1760px] px-4 sm:px-6 lg:px-10 2xl:px-16">
-              <div className="mb-8">
-                <p className="mb-2 text-xs font-semibold uppercase tracking-[0.25em] text-amber-600">
-                  ATHENS CAR RENTAL GREECE
-                </p>
-                <h2 className="text-3xl font-extrabold text-[#111111] lg:text-4xl">
-                  Why travelers choose ACR
-                </h2>
+          <section className="why-acr">
+            <div className="why-acr__container">
+              <div className="why-acr__header">
+                <div>
+                  <p className="why-acr__eyebrow">ATHENS CAR RENTAL · GREECE</p>
+                  <h2 className="why-acr__title">
+                    Why travelers
+                    <br />
+                    choose ACR
+                  </h2>
+                </div>
+                <a className="why-acr__reviews" href="/customer-reviews">
+                  <span>View customer reviews</span>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" aria-hidden="true">
+                    <path d="M5 12h14m-6-6 6 6-6 6" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                </a>
               </div>
 
-              <div className="grid items-stretch gap-6 sm:grid-cols-2 lg:grid-cols-4">
-                {[
-                  {
-                    href: '/reviews',
-                    title: 'Customer reviews',
-                    description: 'Read what our customers say about us.',
-                    icon: 'star',
-                    delay: 0,
-                  },
-                  {
-                    href: '/tripadvisor',
-                    title: "Travelers' Choice Award",
-                    description: "Winners of the TripAdvisor Travelers' Choice Award.",
-                    icon: 'award',
-                    delay: 100,
-                    awardBadge: true,
-                  },
-                  {
-                    href: '/cargo-vans',
-                    title: 'ACR Cargo Vans',
-                    description: 'Spacious vans for moving, deliveries and group trips.',
-                    icon: 'truck',
-                    delay: 200,
-                  },
-                  {
-                    href: '/early-bird',
-                    title: 'Early Bird Discounts',
-                    description: 'Book early and get our best prices.',
-                    icon: 'badge-percent',
-                    delay: 300,
-                    saveMore: true,
-                  },
-                ].map((tile) => (
-                  <a
-                    key={tile.title}
-                    href={tile.href}
-                    className="reveal-up group relative flex min-h-[220px] flex-col rounded-3xl bg-white p-6 shadow-lg ring-2 ring-[#FACC15] transition duration-300 hover:-translate-y-1 hover:shadow-xl focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-amber-400 motion-reduce:transition-none motion-reduce:hover:translate-y-0 lg:min-h-[300px]"
-                    style={{ animation: 'fadeUp 0.6s ease-out both', animationDelay: `${tile.delay}ms` }}
-                  >
-                    <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-[#FEF3C7] text-[#D97706]">
-                      <FeatureTileIcon name={tile.icon} className="h-7 w-7 shrink-0" />
+              <div className="why-acr__grid">
+                <article className="why-acr__card why-acr__card--dark">
+                  <div className="why-acr__card-top">
+                    <span className="why-acr__icon-chip why-acr__icon-chip--yellow">
+                      <FeatureTileIcon name="award" />
                     </span>
-
-                    <h3 className="mt-5 min-h-[3.5rem] text-xl font-extrabold uppercase leading-tight text-[#111111]">
-                      {tile.title}
-                    </h3>
-                    <p className="mt-2 text-sm text-slate-600">{tile.description}</p>
-
-                    {tile.title === 'Customer reviews' && (
-                      <div className="mt-3 flex items-center gap-1" aria-label="Five stars">
-                        {Array.from({ length: 5 }).map((_, index) => (
-                          <svg key={index} width={20} height={20} viewBox="0 0 24 24" fill="#FACC15" className="h-5 w-5 shrink-0" aria-hidden="true">
-                            <path d="m12 2.75 2.86 5.79 6.39.93-4.63 4.51 1.09 6.36L12 17.34l-5.71 3 1.09-6.36-4.63-4.51 6.39-.93L12 2.75Z" />
-                          </svg>
-                        ))}
-                      </div>
-                    )}
-
-                    {tile.awardBadge && (
-                      <div className="mt-3 flex min-h-16 items-center">
-                        <TripAdvisorAwardBadge />
-                        <span className="ml-3 inline-flex rounded-full bg-[#FEF3C7] px-3 py-1 text-xs font-bold text-[#111111]">
-                          2022 &ndash; 2026
-                        </span>
-                      </div>
-                    )}
-
-                    {tile.saveMore && (
-                      <span className="mt-3 inline-flex w-fit rounded-full bg-[#111111] px-3 py-1 text-[10px] font-bold uppercase text-[#FACC15]">
-                        SAVE MORE
-                      </span>
-                    )}
-
-                    <span className="mt-auto inline-flex items-center gap-2 pt-5 text-sm font-semibold text-[#111111]">
-                      {tile.title === 'Customer reviews' && 'Read the reviews'}
-                      {tile.awardBadge && 'See the award'}
-                      {tile.title === 'ACR Cargo Vans' && 'Book your van'}
-                      {tile.saveMore && 'Get the offer'}
-                      <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-4 w-4 shrink-0 transition-transform group-hover:translate-x-1 motion-reduce:transition-none" aria-hidden="true">
-                        <path d="M5 12h14" strokeLinecap="round" strokeLinejoin="round" />
-                        <path d="m13 6 6 6-6 6" strokeLinecap="round" strokeLinejoin="round" />
-                      </svg>
-                    </span>
+                    <span className="why-acr__tripadvisor">TripAdvisor</span>
+                  </div>
+                  <div className="why-acr__card-content">
+                    <p className="why-acr__stat why-acr__stat--dark">2022–<br />2026</p>
+                    <h3 className="why-acr__card-title">Travelers' Choice Award</h3>
+                    <p className="why-acr__description why-acr__description--dark">
+                      Winners of the TripAdvisor Travelers' Choice Award.
+                    </p>
+                  </div>
+                  <a className="why-acr__link" href="/tripadvisor">
+                    <span>See the award</span>
+                    <ArrowIcon />
                   </a>
-                ))}
+                </article>
+
+                <article className="why-acr__card why-acr__card--yellow">
+                  <div className="why-acr__card-top">
+                    <span className="why-acr__icon-chip why-acr__icon-chip--dark">
+                      <FeatureTileIcon name="truck" />
+                    </span>
+                  </div>
+                  <svg className="why-acr__van" viewBox="0 0 220 92" fill="none" aria-hidden="true">
+                    <path d="M28 20h113a8 8 0 0 1 8 8v45H28V20Z" stroke="currentColor" strokeWidth="2.5" strokeLinejoin="round" />
+                    <path d="M149 43h28l20 20v10h-48V43ZM150 48v20h38l-15-20h-23ZM42 33h73v27H42z" stroke="currentColor" strokeWidth="2.5" strokeLinejoin="round" />
+                    <path d="M28 62h141M90 33v27" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
+                    <circle cx="63" cy="75" r="11" fill="var(--acr-yellow)" stroke="currentColor" strokeWidth="2.5" />
+                    <circle cx="166" cy="75" r="11" fill="var(--acr-yellow)" stroke="currentColor" strokeWidth="2.5" />
+                  </svg>
+                  <div className="why-acr__card-content">
+                    <h3 className="why-acr__card-title">ACR Cargo Vans</h3>
+                    <p className="why-acr__description why-acr__description--yellow">
+                      Spacious vans for moving, deliveries and group trips.
+                    </p>
+                  </div>
+                  <a className="why-acr__link" href="/cargo-vans">
+                    <span>Book your van</span>
+                    <ArrowIcon />
+                  </a>
+                </article>
+
+                <article className="why-acr__card why-acr__card--white">
+                  <div className="why-acr__card-top">
+                    <span className="why-acr__icon-chip why-acr__icon-chip--soft">
+                      <FeatureTileIcon name="tag" />
+                    </span>
+                    <span className="why-acr__save-badge">SAVE MORE</span>
+                  </div>
+                  <div className="why-acr__card-content">
+                    <p className="why-acr__stat why-acr__stat--white">Early<br />bird</p>
+                    <h3 className="why-acr__card-title">Early Bird Discounts</h3>
+                    <p className="why-acr__description why-acr__description--white">
+                      Book early and get our best prices.
+                    </p>
+                  </div>
+                  <a className="why-acr__link" href="/early-bird">
+                    <span>Get the offer</span>
+                    <ArrowIcon />
+                  </a>
+                </article>
               </div>
             </div>
           </section>
@@ -889,101 +728,9 @@ export function HomePage({ data, offers = [], reviews = [], lang = 'en', loading
             }
           `}</style>
 
-          <section className="bg-[#F7F4EF] py-8 lg:py-8">
+          <section className="bg-[#F7F4EF] py-8 lg:py-10">
             <div className="mx-auto w-full max-w-[1760px] px-4 sm:px-6 lg:px-10 2xl:px-16">
-              <div className="mb-8 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-                <div>
-                  <span className="text-xs font-semibold uppercase tracking-[0.25em] text-amber-600">ABOUT US</span>
-                  <h2 className="mt-3 text-3xl font-extrabold text-[#111111] lg:text-4xl">
-                    Reliable car rental near Athens Airport
-                  </h2>
-                </div>
-              </div>
-
-              <div className="mb-8 grid grid-cols-3 gap-4">
-                <div className="rounded-2xl bg-white p-5 text-center shadow-sm ring-1 ring-black/5">
-                  <div className="whitespace-nowrap text-3xl font-extrabold text-[#111111] lg:text-4xl">2005</div>
-                  <div className="mt-2 text-xs text-slate-500">Founded</div>
-                </div>
-                <div className="rounded-2xl bg-white p-5 text-center shadow-sm ring-1 ring-black/5">
-                  <div className="whitespace-nowrap text-3xl font-extrabold text-[#111111] lg:text-4xl">18 mo.</div>
-                  <div className="mt-2 text-xs text-slate-500">Average fleet age</div>
-                </div>
-                <div className="rounded-2xl bg-white p-5 text-center shadow-sm ring-1 ring-black/5">
-                  <div className="whitespace-nowrap text-3xl font-extrabold text-[#111111] lg:text-4xl">5 yrs</div>
-                  <div className="mt-2 text-xs text-slate-500">Maximum age</div>
-                </div>
-              </div>
-
-              <div className="grid items-stretch gap-6 md:grid-cols-3">
-                <article className="reveal-up relative flex min-h-[320px] flex-col overflow-hidden rounded-3xl bg-white p-7 shadow-lg ring-2 ring-[#FACC15] transition duration-300 hover:-translate-y-1 hover:shadow-xl" style={{ animation: 'fadeUp 0.6s ease-out both' }}>
-                  <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#FEF3C7] text-[#D97706]">
-                    <svg width={28} height={28} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-7 w-7 shrink-0" aria-hidden="true">
-                      <path d="M3 9.5A2.5 2.5 0 0 1 5.5 7H18.5A2.5 2.5 0 0 1 21 9.5V16a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-6.5Z" strokeLinecap="round" strokeLinejoin="round" />
-                      <path d="M7 12h10M7 15.5h5" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
-                  </div>
-
-                  <div className="relative z-10 mt-6">
-                    <h3 className="text-2xl font-extrabold uppercase leading-tight text-[#111111]">0% fee, 0% commission</h3>
-                    <p className="mt-3 text-base leading-relaxed text-slate-600">For credit card use.</p>
-                  </div>
-
-                  <a href="/payment-options" className="relative z-10 mt-auto inline-flex items-center gap-2 pt-6 text-sm font-semibold text-[#111111] hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2">
-                    <span>See payment options</span>
-                    <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-4 w-4 shrink-0" aria-hidden="true">
-                      <path d="M5 12h14" strokeLinecap="round" strokeLinejoin="round" />
-                      <path d="m13 5 7 7-7 7" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
-                  </a>
-                </article>
-
-                <article className="reveal-up relative flex min-h-[320px] flex-col overflow-hidden rounded-3xl bg-white p-7 shadow-lg ring-2 ring-[#FACC15] transition duration-300 hover:-translate-y-1 hover:shadow-xl" style={{ animation: 'fadeUp 0.6s ease-out both', animationDelay: '80ms' }}>
-                  <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#FEF3C7] text-[#D97706]">
-                    <svg width={28} height={28} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-7 w-7 shrink-0" aria-hidden="true">
-                      <path d="M2 16.5V9.5a2 2 0 0 1 2-2h6.5L12.5 8H20a2 2 0 0 1 2 2v6.5A2.5 2.5 0 0 1 19.5 19H4.5A2.5 2.5 0 0 1 2 16.5Z" strokeLinecap="round" strokeLinejoin="round" />
-                      <path d="M6 15.5h12" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
-                  </div>
-
-                  <div className="relative z-10 mt-6">
-                    <h3 className="text-2xl font-extrabold uppercase leading-tight text-[#111111]">Free ferry permission</h3>
-                    <p className="mt-3 text-base leading-relaxed text-slate-600">Free and pre-authorised permission to ferry our cars to all Greek islands.</p>
-                  </div>
-
-                  <a href="/island-rentals" className="relative z-10 mt-auto inline-flex items-center gap-2 pt-6 text-sm font-semibold text-[#111111] hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2">
-                    <span>Island rentals</span>
-                    <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-4 w-4 shrink-0" aria-hidden="true">
-                      <path d="M5 12h14" strokeLinecap="round" strokeLinejoin="round" />
-                      <path d="m13 5 7 7-7 7" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
-                  </a>
-                </article>
-
-                <article className="reveal-up relative flex min-h-[320px] flex-col overflow-hidden rounded-3xl bg-white p-7 shadow-lg ring-2 ring-[#FACC15] transition duration-300 hover:-translate-y-1 hover:shadow-xl" style={{ animation: 'fadeUp 0.6s ease-out both', animationDelay: '160ms' }}>
-                  <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#FEF3C7] text-[#D97706]">
-                    <svg width={28} height={28} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-7 w-7 shrink-0" aria-hidden="true">
-                      <path d="M2 15.5V9.5l7-4.5 8 5.5 5-3.5v12.5L17 16l-8 5.5L2 15.5Z" strokeLinecap="round" strokeLinejoin="round" />
-                      <path d="M9 11.5h8M9 15.5h8" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
-                  </div>
-
-                  <div className="relative z-10 mt-6">
-                    <h3 className="text-2xl font-extrabold uppercase leading-tight text-[#111111]">24h airport delivery</h3>
-                    <p className="mt-3 text-base leading-relaxed text-slate-600">Express delivery at Athens Airport Eleftherios Venizelos.</p>
-                  </div>
-
-                  <a href="/booking" className="relative z-10 mt-auto inline-flex items-center gap-2 pt-6 text-sm font-semibold text-[#111111] hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2">
-                    <span>Book delivery</span>
-                    <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-4 w-4 shrink-0" aria-hidden="true">
-                      <path d="M5 12h14" strokeLinecap="round" strokeLinejoin="round" />
-                      <path d="m13 5 7 7-7 7" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
-                  </a>
-                </article>
-              </div>
-
-              <div className="reveal-up relative isolate mt-6 overflow-hidden rounded-3xl bg-white p-8 shadow-lg ring-2 ring-[#FACC15] lg:mt-8 lg:p-14" style={{ animation: 'fadeUp 0.6s ease-out both', animationDelay: '200ms' }}>
+              <div className="reveal-up relative isolate overflow-hidden rounded-3xl bg-white p-8 shadow-lg ring-2 ring-[#FACC15] lg:p-14" style={{ animation: 'fadeUp 0.6s ease-out both', animationDelay: '200ms' }}>
                 <div className="grid items-center gap-10 lg:grid-cols-[5fr_7fr] lg:gap-16">
                   <div>
                     <div className="inline-flex items-center gap-2 rounded-full bg-[#111111] px-3 py-1.5 text-xs font-bold uppercase tracking-[0.2em] text-[#FACC15]">
@@ -1054,7 +801,7 @@ export function HomePage({ data, offers = [], reviews = [], lang = 'en', loading
           <section className="bg-[#F7F4EF] py-8 lg:py-8">
             <div className="mx-auto w-full max-w-[1760px] px-4 sm:px-6 lg:px-10 2xl:px-16">
               <div className="mb-8 text-center">
-                <span className="text-xs font-semibold uppercase tracking-[0.25em] text-amber-600">WHY ATHENS CAR RENTAL</span>
+                <span className="text-xs font-semibold uppercase tracking-[0.25em] text-[#FACC15]">WHY ATHENS CAR RENTAL</span>
                 <h2 className="mt-4 text-3xl font-extrabold text-[#111111] lg:text-4xl">
                   Service, fleet and rates you can trust
                 </h2>
@@ -1131,7 +878,7 @@ export function HomePage({ data, offers = [], reviews = [], lang = 'en', loading
                           type="button"
                           onClick={() => setExpandedService(isExpanded ? null : card.id)}
                           aria-expanded={isExpanded}
-                          className="mt-auto inline-flex items-center gap-2 pt-6 text-sm font-semibold text-[#111111] hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2 motion-reduce:transition-none"
+                          className="mt-auto inline-flex items-center gap-2 pt-6 text-sm font-semibold text-[#111111] hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FACC15] focus-visible:ring-offset-2 motion-reduce:transition-none"
                         >
                           <span>Read more</span>
                           <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className={`h-4 w-4 shrink-0 transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`} aria-hidden="true">
@@ -1141,7 +888,7 @@ export function HomePage({ data, offers = [], reviews = [], lang = 'en', loading
                       )}
 
                       {card.isLink && (
-                        <a href={card.ctaHref} className="mt-auto inline-flex items-center gap-2 pt-6 text-sm font-semibold text-[#111111] hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2">
+                        <a href={card.ctaHref} className="mt-auto inline-flex items-center gap-2 pt-6 text-sm font-semibold text-[#111111] hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FACC15] focus-visible:ring-offset-2">
                           <span>{card.ctaText}</span>
                           <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-4 w-4 shrink-0" aria-hidden="true">
                             <path d="M5 12h14" strokeLinecap="round" strokeLinejoin="round" />
@@ -1163,16 +910,11 @@ export function HomePage({ data, offers = [], reviews = [], lang = 'en', loading
                     <a
                       key={card.href}
                       href={card.href}
-                      className="group relative block overflow-hidden rounded-3xl bg-[#111111] shadow-lg ring-2 ring-[#FACC15] transition duration-300 hover:-translate-y-1 hover:shadow-2xl focus-visible:ring-4 focus-visible:ring-amber-400"
+                      className="group relative block overflow-hidden rounded-3xl bg-[#111111] shadow-lg ring-2 ring-[#FACC15] transition duration-300 hover:-translate-y-1 hover:shadow-2xl focus-visible:ring-4 focus-visible:ring-[#FACC15]"
                     >
                       {hasImageError ? (
-                        <div className="aspect-[4/3] w-full bg-gradient-to-br from-[#2B2B2B] to-[#111111]">
-                          <div className="flex h-full items-center justify-center">
-                            <svg viewBox="0 0 24 24" width={80} height={80} fill="none" stroke="currentColor" strokeWidth="1.6" className="h-20 w-20 shrink-0 text-white/20" aria-hidden="true">
-                              <path d="M3.5 14.5h17l-1.2-5.1A2 2 0 0 0 17.4 8h-10a2 2 0 0 0-1.9 1.4L3.5 14.5Z" strokeLinecap="round" strokeLinejoin="round" />
-                              <path d="M6 14.5v2.2m12-2.2v2.2M7 17.5a1.7 1.7 0 1 0 0 3.4 1.7 1.7 0 0 0 0-3.4Zm10 0a1.7 1.7 0 1 0 0 3.4 1.7 1.7 0 0 0 0-3.4Z" strokeLinecap="round" strokeLinejoin="round" />
-                            </svg>
-                          </div>
+                        <div className="flex aspect-[4/3] w-full items-center justify-center bg-gradient-to-br from-[#2B2B2B] to-[#111111]">
+                          <CarFront width={80} height={80} className="h-20 w-20 shrink-0 text-white/20" aria-hidden="true" />
                         </div>
                       ) : (
                         <img
@@ -1181,7 +923,8 @@ export function HomePage({ data, offers = [], reviews = [], lang = 'en', loading
                           width={800}
                           height={600}
                           loading="lazy"
-                          className="aspect-[4/3] w-full object-cover transition duration-500 group-hover:scale-105"
+                          decoding="async"
+                          className="aspect-[4/3] w-full object-cover object-center transition duration-500 group-hover:scale-105"
                           onError={() => setServiceCardPhotos((current) => ({ ...current, [index]: true }))}
                         />
                       )}
@@ -1207,65 +950,14 @@ export function HomePage({ data, offers = [], reviews = [], lang = 'en', loading
               </div>
             </div>
           </section>
-
-          <section className="mx-auto w-full max-w-[1760px] px-4 sm:px-6 lg:px-10 2xl:px-16 content-section">
-            <div className="section-header">
-              <span className="eyebrow">Customer reviews</span>
-              <h2>What our clients say</h2>
-            </div>
-            <div className="reviews-grid">
-              {reviews.length ? (
-                reviews.slice(0, 3).map((review) => (
-                  <article key={review.id || review.author} className="review-card">
-                    <div className="review-topline">
-                      <strong>{review.author || 'Guest review'}</strong>
-                      <span>{review.source || 'Google'} • {review.rating || 5}/5</span>
-                    </div>
-                    <p>{review.text || ''}</p>
-                  </article>
-                ))
-              ) : (
-                <div className="state-box">No reviews available.</div>
-              )}
-            </div>
-          </section>
-
-          <section className="mx-auto w-full max-w-[1760px] px-4 sm:px-6 lg:px-10 2xl:px-16 content-section">
-            <div className="section-header">
-              <span className="eyebrow">Special offers</span>
-              <h2>Current offers</h2>
-            </div>
-            <div className="offers-grid">
-              {offers.length ? (
-                offers.map((offer) => (
-                  <article key={offer.id || offer.slug} className="offer-card">
-                    <h3>{offer.name || 'Offer'}</h3>
-                    <p>{offer.description || 'Exclusive rate available.'}</p>
-                  </article>
-                ))
-              ) : (
-                <div className="state-box">No offers available.</div>
-              )}
-            </div>
-          </section>
-
-          <section className="mx-auto w-full max-w-[1760px] px-4 sm:px-6 lg:px-10 2xl:px-16 content-section guide-section">
-            <div className="section-header">
-              <span className="eyebrow">Travel guide</span>
-              <h2>Discover Greece</h2>
-            </div>
-            <div className="guide-grid">
-              <article>Attika</article>
-              <article>Peloponnese</article>
-              <article>Central Greece</article>
-            </div>
-          </section>
-
-          <div className="mx-auto w-full max-w-[1760px] px-4 sm:px-6 lg:px-10 2xl:px-16 arguments-list">
-            {argumentsList.length ? argumentsList.map((item, index) => <span key={`${item.label || 'arg'}-${index}`}>{item.label || item}</span>) : <span>0% card fees</span>}
-          </div>
-        </>
-      )}
     </section>
+  )
+}
+
+function ArrowIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" aria-hidden="true">
+      <path d="M5 12h14m-6-6 6 6-6 6" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
   )
 }

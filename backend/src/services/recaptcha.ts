@@ -16,14 +16,23 @@ export async function verifyRecaptchaToken(token: string, expectedAction: string
 
   let response: Response;
   try {
-    response = await fetch("https://www.google.com/recaptcha/api/siteverify", {
+    const verificationUrl = env.NODE_ENV === "test" && env.RECAPTCHA_TEST_VERIFY_URL
+      ? env.RECAPTCHA_TEST_VERIFY_URL
+      : "https://www.google.com/recaptcha/api/siteverify";
+    response = await fetch(verificationUrl, {
       method: "POST",
       headers: { "content-type": "application/x-www-form-urlencoded" },
       body: new URLSearchParams({ secret: env.RECAPTCHA_SECRET_KEY, response: token }),
       signal: AbortSignal.timeout(5_000),
     });
   } catch (error) {
-    console.error("reCAPTCHA verification request failed", error);
+    if (process.env.NODE_ENV === "production") {
+      console.error("reCAPTCHA verification request failed", {
+        name: error instanceof Error ? error.name : "UnknownError",
+      });
+    } else {
+      console.error("reCAPTCHA verification request failed", error);
+    }
     throw new AppError(503, "RECAPTCHA_UNAVAILABLE", "Form verification is temporarily unavailable");
   }
 

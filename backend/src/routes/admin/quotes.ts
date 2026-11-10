@@ -263,20 +263,13 @@ quotesRouter.post("/:id/send-quote", async (request, response) => {
   if (!quote.vehicles.length) {
     throw new AppError(409, "QUOTE_CATEGORY_MISSING", "The quote has no vehicle category");
   }
-  if (!env.PAYMENT_PORTAL_URL) {
-    throw new AppError(
-      503,
-      "PAYMENT_PORTAL_URL_NOT_CONFIGURED",
-      "Set PAYMENT_PORTAL_URL to the customer payment portal before sending quotes",
-    );
-  }
   const [rentalPolicy, rentalInfo] = await Promise.all([
     prisma.setting.findUnique({ where: { key: "rental-policy" }, select: { value: true } }),
     prisma.setting.findUnique({ where: { key: "rental-info" }, select: { value: true } }),
   ]);
   const language = quote.language === "el" ? "el" : "en";
-  const paymentUrl = new URL(env.PAYMENT_PORTAL_URL);
-  paymentUrl.searchParams.set("reservationReference", quote.reference);
+  const paymentUrl = new URL("/pay", env.APP_URL);
+  paymentUrl.searchParams.set("ref", quote.reference);
 
   const payload = {
     reference: quote.reference,
@@ -287,8 +280,8 @@ quotesRouter.post("/:id/send-quote", async (request, response) => {
       cdwExcessEur: resolveCdwExcessEur(vehicle, rentalInfo?.value),
       cancellationNoticeDays: getCancellationNoticeDays(rentalPolicy?.value, vehicle.code),
     })),
-    pickupLocation: localizedName(quote.pickupLocation.name, quote.language),
-    returnLocation: localizedName(quote.returnLocation.name, quote.language),
+    pickupLocation: quote.pickupLocationLabel ?? localizedName(quote.pickupLocation.name, quote.language),
+    returnLocation: quote.returnLocationLabel ?? localizedName(quote.returnLocation.name, quote.language),
     pickupAt: quote.pickupAt.toISOString(),
     returnAt: quote.returnAt.toISOString(),
     totalEur: quote.quotedTotalEur.toFixed(2),

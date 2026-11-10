@@ -79,10 +79,10 @@ const vehicles = [
 }));
 
 const locations = [
-  { slug: "athens-international-airport", name: bilingual("Athens International Airport", "Διεθνής Αερολιμένας Αθηνών"), isAirport: true, isFree: true },
+  { slug: "athens-international-airport", name: bilingual("Athens International Airport \"Eleftherios Venizelos\"", "Διεθνής Αερολιμένας Αθηνών \"Ελευθέριος Βενιζέλος\""), isAirport: true, isFree: true, locationType: "airport", afterHoursFeeCents: null, deliveryFeeCents: null },
   { slug: "athens-city-center", name: bilingual("Athens City Center", "Κέντρο Αθήνας") },
-  { slug: "koropi-metro-station", name: bilingual("Koropi Metro Station", "Σταθμός Μετρό Κορωπίου"), isFree: true },
-  { slug: "piraeus-port", name: bilingual("Piraeus Port", "Λιμάνι Πειραιά") },
+  { slug: "koropi-metro-station", name: bilingual("Koropi Metro Station", "Σταθμός Μετρό Κορωπίου"), isFree: true, locationType: "station", afterHoursFeeCents: null, deliveryFeeCents: null },
+  { slug: "piraeus-port", name: bilingual("Piraeus Port", "Λιμάνι Πειραιά"), locationType: "port", afterHoursFeeCents: null, deliveryFeeCents: null },
   { slug: "glyfada", name: bilingual("Glyfada", "Γλυφάδα") },
   { slug: "marousi", name: bilingual("Marousi", "Μαρούσι") },
   { slug: "other-location", name: bilingual("Other Location", "Άλλη τοποθεσία") },
